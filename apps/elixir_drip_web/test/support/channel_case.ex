@@ -27,9 +27,9 @@ defmodule ElixirDripWeb.ChannelCase do
 
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(ElixirDripWeb.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(ElixirDrip.Repo)
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(ElixirDripWeb.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(ElixirDrip.Repo, {:shared, self()})
     end
     :ok
   end

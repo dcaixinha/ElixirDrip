@@ -8,7 +8,7 @@ use Mix.Config
 # General application configuration
 config :elixir_drip_web,
   namespace: ElixirDripWeb,
-  ecto_repos: [ElixirDripWeb.Repo]
+  ecto_repos: [ElixirDrip.Repo]
 
 # Configures the endpoint
 config :elixir_drip_web, ElixirDripWeb.Endpoint,
