@@ -1,0 +1,31 @@
+FROM bitwalker/alpine-elixir:1.5.2
+
+MAINTAINER ElixirDrip "dev@elixirdrip.io"
+
+ARG mix_env=dev
+ARG http_port=4000
+ARG app_path=/opt/app/
+ARG app_name=elixir_drip
+
+ENV TERM xterm
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+ENV REFRESHED_AT 2017-12-16
+
+ENV APP_PATH $app_path
+ENV APP_NAME $app_name
+ENV HTTP_PORT $http_port
+ENV MIX_ENV $mix_env
+
+RUN apk add --no-cache inotify-tools
+RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
+
+ADD . $APP_PATH/$APP_NAME
+
+WORKDIR $APP_PATH/$APP_NAME
+
+EXPOSE $HTTP_PORT
+
+CMD ["elixir", "--sname node -S", "mix run --no-halt"]
