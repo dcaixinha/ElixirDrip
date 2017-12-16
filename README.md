@@ -1,4 +1,4 @@
-# ElixirDripUmbrella
+# ElixirDrip Umbrella
 
 **TODO: Add description**
 

@@ -1,4 +1,4 @@
-defmodule ElixirDripUmbrella.Mixfile do
+defmodule ElixirDrip.Umbrella.Mixfile do
   use Mix.Project
 
   def project do
