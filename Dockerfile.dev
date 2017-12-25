@@ -19,7 +19,7 @@ ENV APP_NAME $app_name
 ENV HTTP_PORT $http_port
 ENV MIX_ENV $mix_env
 
-RUN apk add --no-cache inotify-tools
+RUN apk add --no-cache inotify-tools nodejs nodejs-npm
 RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
 
 ADD . $APP_PATH/$APP_NAME

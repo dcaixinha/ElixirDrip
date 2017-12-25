@@ -27,6 +27,9 @@ ENV EPMD_PORT $epmd_port
 ENV MIX_ENV $mix_env
 ENV REPLACE_OS_VARS $replace_os_vars
 
+RUN apk add --no-cache inotify-tools nodejs nodejs-npm
+RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
+
 ADD . $APP_PATH/$APP_NAME
 
 WORKDIR $APP_PATH/$APP_NAME
@@ -34,7 +37,10 @@ WORKDIR $APP_PATH/$APP_NAME
 RUN rm -rf _build  \
     && rm -rf deps \
     && rm -rf logs \
-    MIX_ENV=$MIX_ENV mix clean \
+    && cd apps/elixir_drip_web/assets \
+    && ./node_modules/brunch/bin/brunch b -p \
+    && cd $APP_PATH/$APP_NAME \
+    && MIX_ENV=$MIX_ENV mix clean \
     && MIX_ENV=$MIX_ENV mix deps.get \
     && MIX_ENV=$MIX_ENV mix compile \
     && MIX_ENV=$MIX_ENV mix release --env=$MIX_ENV
