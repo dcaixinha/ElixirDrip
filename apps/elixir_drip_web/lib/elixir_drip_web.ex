@@ -28,8 +28,9 @@ defmodule ElixirDripWeb do
 
   def view do
     quote do
-      use Phoenix.View, root: "lib/elixir_drip_web/templates",
-                        namespace: ElixirDripWeb
+      use Phoenix.View,
+        root: "lib/elixir_drip_web/templates",
+        namespace: ElixirDripWeb
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_flash: 2, view_module: 1]

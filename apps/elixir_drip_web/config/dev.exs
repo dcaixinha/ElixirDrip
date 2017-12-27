@@ -11,8 +11,14 @@ config :elixir_drip_web, ElixirDripWeb.Endpoint,
   debug_errors: true,
   code_reloader: true,
   check_origin: false,
-  watchers: [node: ["node_modules/brunch/bin/brunch", "watch", "--stdin",
-                    cd: Path.expand("../assets", __DIR__)]]
+  watchers: [
+    node: [
+      "node_modules/brunch/bin/brunch",
+      "watch",
+      "--stdin",
+      cd: Path.expand("../assets", __DIR__)
+    ]
+  ]
 
 # ## SSL Support
 #
@@ -40,5 +46,3 @@ config :elixir_drip_web, ElixirDripWeb.Endpoint,
       ~r{lib/elixir_drip_web/templates/.*(eex)$}
     ]
   ]
-
-

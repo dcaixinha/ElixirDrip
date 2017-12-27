@@ -7,5 +7,5 @@ config :elixir_drip, ElixirDrip.Repo,
   password: System.get_env("DB_PASS"),
   database: System.get_env("DB_NAME"),
   hostname: System.get_env("DB_HOST"),
-  port:     System.get_env("DB_PORT"),
+  port: System.get_env("DB_PORT"),
   pool: Ecto.Adapters.SQL.Sandbox
