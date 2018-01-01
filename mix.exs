@@ -5,7 +5,8 @@ defmodule ElixirDrip.Umbrella.Mixfile do
     [
       apps_path: "apps",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
     ]
   end
 
@@ -18,6 +19,12 @@ defmodule ElixirDrip.Umbrella.Mixfile do
     [
       {:distillery, "~> 1.5", runtime: false},
       {:credo, "~> 0.3", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp aliases do
+    [
+      lint: ["format", "credo"]
     ]
   end
 end
