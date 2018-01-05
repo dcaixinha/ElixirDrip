@@ -37,7 +37,8 @@ defmodule ElixirDrip.Mixfile do
   defp deps do
     [
       {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.1"}
+      {:ecto, "~> 2.1"},
+      {:ksuid, "~> 0.1.2"},
     ]
   end
 
