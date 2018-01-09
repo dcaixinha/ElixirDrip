@@ -39,6 +39,8 @@ defmodule ElixirDrip.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.1"},
       {:ksuid, "~> 0.1.2"},
+      {:arc, github: "stavro/arc", override: true},
+      {:arc_gcs, "~> 0.0.3"}
     ]
   end
 
