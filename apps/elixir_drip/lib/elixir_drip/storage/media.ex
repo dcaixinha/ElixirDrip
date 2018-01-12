@@ -5,9 +5,10 @@ defmodule ElixirDrip.Storage.Media do
   schema "storage_media" do
     field :filename, :string
     field :full_path, :string
-    field :metadata, :map
+    field :metadata, :map, default: %{}
     field :encryption_key, :string
     field :storage_key, :string
+    field :uploaded_at, :utc_datetime
 
     timestamps()
   end
