@@ -3,9 +3,12 @@ defmodule ElixirDrip.Storage.Workers.CacheWorker do
   require Logger
 
   @expire_time 60_000
+
   def start_link(media_id, content) do
-    GenServer.start_link(__MODULE__, content, name: {:global, {:cache, media_id}})
+    GenServer.start_link(__MODULE__, content, name: name_for(media_id))
   end
+
+  def name_for(media_id), do: {:global, {:cache, media_id}}
 
   def init(content) do
     timer = Process.send_after(self(), :expire, @expire_time)
@@ -22,6 +25,8 @@ defmodule ElixirDrip.Storage.Workers.CacheWorker do
   def handle_info(msg, state) do
     super(msg, state)
   end
+
+  def get_media(pid), do: GenServer.call(pid, :get_media)
 
   def handle_call(:get_media, _from, %{hits: hits, content: content, timer: timer} = state) do
     Logger.debug("#{inspect(self())}: Received :get_media and served #{byte_size(content)} bytes #{hits+1} times.")
