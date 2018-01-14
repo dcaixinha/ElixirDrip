@@ -9,7 +9,10 @@ defmodule ElixirDrip.Application do
   """
   use Application
 
-  alias ElixirDrip.Storage.Supervisors.CacheSupervisor
+  alias ElixirDrip.Storage.{
+    Supervisors.CacheSupervisor,
+    Workers.QueueWorker
+  }
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -17,7 +20,9 @@ defmodule ElixirDrip.Application do
     Supervisor.start_link(
       [
         supervisor(ElixirDrip.Repo, []),
-        supervisor(CacheSupervisor, [], name: CacheSupervisor)
+        supervisor(CacheSupervisor, [], name: CacheSupervisor),
+        worker(QueueWorker, ["download"], id: :download_queue, restart: :permanent),
+        worker(QueueWorker, ["upload"], id: :upload_queue, restart: :permanent)
       ],
       strategy: :one_for_one,
       name: ElixirDrip.Supervisor
