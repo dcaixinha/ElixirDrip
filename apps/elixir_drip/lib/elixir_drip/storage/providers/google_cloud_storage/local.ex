@@ -4,7 +4,7 @@ defmodule ElixirDrip.Storage.Providers.GoogleCloudStorage.Local do
   require Logger
 
   def upload(path, content) do
-    Logger.debug("Uploading #{inspect(byte_size(content))} bytes to Google Cloud Storage, path: #{path}")
+    Logger.debug("Uploading '#{inspect(content)}' to Google Cloud Storage, path: #{path}")
     {:ok, :uploaded}
   end
 

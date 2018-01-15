@@ -14,6 +14,13 @@ defmodule ElixirDrip.Application do
     Workers.QueueWorker
   }
 
+  alias ElixirDrip.Storage.Pipeline.{
+    Starter,
+    Encryption,
+    RemoteStorage,
+    Notifier
+  }
+
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
@@ -21,8 +28,12 @@ defmodule ElixirDrip.Application do
       [
         supervisor(ElixirDrip.Repo, []),
         supervisor(CacheSupervisor, [], name: CacheSupervisor),
-        worker(QueueWorker, ["download"], id: :download_queue, restart: :permanent),
-        worker(QueueWorker, ["upload"], id: :upload_queue, restart: :permanent)
+        worker(QueueWorker, [:download], id: :download_queue, restart: :permanent),
+        worker(QueueWorker, [:upload], id: :upload_queue, restart: :permanent),
+        worker(Starter, [:download], restart: :permanent),
+        worker(RemoteStorage, [], restart: :permanent),
+        worker(Encryption, [], restart: :permanent),
+        worker(Notifier, [], restart: :permanent)
       ],
       strategy: :one_for_one,
       name: ElixirDrip.Supervisor
