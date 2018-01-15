@@ -5,7 +5,12 @@ defmodule ElixirDrip.Storage do
   alias ElixirDrip.Repo
   alias ElixirDrip.Utils
   alias ElixirDrip.Storage.Media
-  alias ElixirDrip.Storage.Provider
+  alias ElixirDrip.Storage.Pipeline.{
+    Starter,
+    Encryption,
+    RemoteStorage,
+    Notifier
+  }
 
   @doc """
     TODO: This will trigger an Upload request
@@ -13,28 +18,50 @@ defmodule ElixirDrip.Storage do
     for now, it sequentially creates the Media on the DB
     and uploads it to the provider
   """
-  def store(filename, full_path, content) do
+  def store(filename, full_path, _content) do
     with %Changeset{} = changeset         <- create_initial_changeset(filename, full_path),
-         %Media{storage_key: key} = media <- Repo.insert!(changeset),
-         {:ok, :uploaded}                 <- Provider.upload(key, content)
+         %Media{storage_key: _key} = _media <- Repo.insert!(changeset)
     do
-      stored_media = media
-      |> changeset(%{uploaded_at: DateTime.utc_now()})
-      |> Repo.update!()
+      # TODO: Enqueue upload event!
 
-      {:ok, stored_media}
+      {:ok, :upload_enqueued}
     end
+  end
+
+  def set_upload_timestamp(%Media{} = media) do
+    media
+    |> changeset(%{uploaded_at: DateTime.utc_now()})
+    |> Repo.update!()
   end
 
   @doc """
     TODO: This will trigger a Download request
     that will be handled by the Download Pipeline
   """
-  def retrieve(%Media{storage_key: storage_key}) do
-    Provider.download(storage_key)
+  def retrieve(%Media{storage_key: _storage_key}) do
+    # Provider.download(storage_key)
+    # TODO: Enqueue download event
+
+    {:ok, :download_enqueued}
   end
 
   def get_media(id), do: Repo.get!(Media, id)
+
+  def start_download_pipeline() do
+    dummy_arg = :ok
+    {:ok, starter} = GenStage.start_link(Starter, :download)
+    {:ok, remote_storage} = GenStage.start_link(RemoteStorage, dummy_arg)
+    {:ok, encryption} = GenStage.start_link(Encryption, dummy_arg)
+    {:ok, notifier} = GenStage.start_link(Notifier, dummy_arg)
+
+    GenStage.sync_subscribe(notifier, to: encryption, min_demand: 1, max_demand: 10)
+    GenStage.sync_subscribe(encryption, to: remote_storage, min_demand: 1, max_demand: 10)
+    GenStage.sync_subscribe(remote_storage, to: starter, min_demand: 1, max_demand: 10)
+
+    # GenStage.sync_subscribe(RemoteStorage, to: Starter)
+    # GenStage.sync_subscribe(Encryption, to: RemoteStorage)
+    # GenStage.sync_subscribe(Notifier, to: Encryption)
+  end
 
   defp create_initial_changeset(filename, full_path) do
     id = Ksuid.generate()
