@@ -4,7 +4,7 @@ defmodule ElixirDrip.Storage.Supervisors.SlowCacheSupervisor do
   require Logger
   alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: RealCache
 
-  @quick_nap 2_000
+  @quick_nap 1_000
 
   def cache_for(id, content) do
     Logger.debug("Spawning a slow cache for #{id}, content size: #{byte_size(content)} bytes.")
