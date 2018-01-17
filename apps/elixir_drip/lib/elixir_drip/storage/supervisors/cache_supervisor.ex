@@ -1,4 +1,6 @@
 defmodule ElixirDrip.Storage.Supervisors.CacheSupervisor do
+  @behaviour ElixirDrip.Behaviours.CacheSupervisor
+
   use   Supervisor
   alias ElixirDrip.Storage.Workers.CacheWorker
 
