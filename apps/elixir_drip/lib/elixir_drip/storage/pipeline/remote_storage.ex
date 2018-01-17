@@ -13,6 +13,8 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   end
 
   def init(subscription_options) do
+    Logger.debug("#{inspect(self())}: Pipeline RemoteStorage started. Options: #{inspect(subscription_options)}")
+
     {:producer_consumer, @dummy_state, subscription_options}
   end
 

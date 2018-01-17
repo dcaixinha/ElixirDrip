@@ -11,6 +11,8 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
   end
 
   def init(subscription_options) do
+    Logger.debug("#{inspect(self())}: Pipeline Notifier started. Options: #{inspect(subscription_options)}")
+
     {:consumer, @dummy_state, subscription_options}
   end
 

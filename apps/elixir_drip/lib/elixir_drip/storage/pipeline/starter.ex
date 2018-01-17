@@ -12,6 +12,8 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   end
 
   def init(type) do
+    Logger.debug("#{inspect(self())}: Pipeline Starter started.")
+
     {
       :producer,
       %{queue: QueueWorker.queue_name(type), type: type, pending: 0}
@@ -29,8 +31,6 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   end
 
   defp send_events_from_queue(queue, how_many, %{type: type} = state) do
-    Logger.debug("#{inspect(self())}: Starter, handling demand for #{how_many} events for #{type}")
-
     tasks = queue
             |> QueueWorker.dequeue(how_many)
             |> Enum.map(&Map.put(&1, :type, type))

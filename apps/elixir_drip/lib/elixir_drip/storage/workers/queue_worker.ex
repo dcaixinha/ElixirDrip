@@ -26,7 +26,7 @@ defmodule ElixirDrip.Storage.Workers.QueueWorker do
   def handle_call({:dequeue, no_items}, _from, queue) do
     {events, queue} = Enum.split(queue, no_items)
 
-    Logger.debug("#{inspect(self())}: Will dequeue #{inspect(events)}. Now with #{length(queue)} items enqueued.")
+    Logger.debug("#{inspect(self())}: Dequeueing #{length(events)} events. Now with #{length(queue)} items enqueued.")
 
     {:reply, events, queue}
   end

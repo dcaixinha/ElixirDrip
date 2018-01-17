@@ -10,6 +10,8 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   end
 
   def init(subscription_options) do
+    Logger.debug("#{inspect(self())}: Pipeline Encryption started. Options: #{inspect(subscription_options)}")
+
     {:producer_consumer, @dummy_state, subscription_options}
   end
 
