@@ -15,13 +15,6 @@ defmodule ElixirDrip.Application do
     Workers.QueueWorker
   }
 
-  alias ElixirDrip.Storage.Pipeline.{
-    Starter,
-    Encryption,
-    RemoteStorage,
-    Notifier
-  }
-
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
