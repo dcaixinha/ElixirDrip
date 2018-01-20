@@ -1,12 +1,15 @@
 defmodule ElixirDrip.Storage.Pipeline.Encryption do
   @moduledoc false
-  @dummy_state :ok
+  @dummy_state []
 
   use     GenStage
   require Logger
+  alias   ElixirDrip.Storage.Pipeline.Common
 
-  def start_link(subscription_options) do
-    GenStage.start_link(__MODULE__, subscription_options, name: __MODULE__)
+  def start_link([type, subscription_options]) do
+    GenStage.start_link(__MODULE__,
+                        subscription_options,
+                        name: Common.stage_name(__MODULE__, type))
   end
 
   def init(subscription_options) do

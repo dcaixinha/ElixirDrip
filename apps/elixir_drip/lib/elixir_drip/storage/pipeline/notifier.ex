@@ -3,11 +3,14 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
 
   use     GenStage
   require Logger
+  alias   ElixirDrip.Storage.Pipeline.Common
 
   @dummy_state :ok
 
-  def start_link(subscription_options) do
-    GenStage.start_link(__MODULE__, subscription_options, name: __MODULE__)
+  def start_link([type, subscription_options]) do
+    GenStage.start_link(__MODULE__,
+                        subscription_options,
+                        name: Common.stage_name(__MODULE__, type))
   end
 
   def init(subscription_options) do

@@ -4,14 +4,19 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   use     GenStage
   require Logger
   alias   ElixirDrip.Storage
-  alias   ElixirDrip.Storage.Provider
-  alias   ElixirDrip.Storage.Media
-  alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
+  alias   Storage.{
+    Provider,
+    Media,
+    Pipeline.Common
+  }
+  alias Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state :ok
 
-  def start_link(subscription_options) do
-    GenStage.start_link(__MODULE__, subscription_options, name: __MODULE__)
+  def start_link([type, subscription_options]) do
+    GenStage.start_link(__MODULE__,
+                        subscription_options,
+                        name: Common.stage_name(__MODULE__, type))
   end
 
   def init(subscription_options) do

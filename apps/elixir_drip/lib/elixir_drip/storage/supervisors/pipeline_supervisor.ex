@@ -5,6 +5,7 @@ defmodule ElixirDrip.Storage.Supervisors.PipelineSupervisor do
 
   use   Supervisor
   alias ElixirDrip.Storage.Pipeline.{
+    Common,
     Starter,
     Encryption,
     RemoteStorage,
@@ -16,22 +17,25 @@ defmodule ElixirDrip.Storage.Supervisors.PipelineSupervisor do
   end
 
   def init(type) do
-    remote_storage_subscription = [subscribe_to: [{Starter, min_demand: 1, max_demand: 10}]]
-    encryption_subscription     = [subscribe_to: [{RemoteStorage, min_demand: 1, max_demand: 10}]]
-    notifier_subscription       = [subscribe_to: [{Encryption, min_demand: 1, max_demand: 10}]]
+    remote_storage_subscription = [subscribe_to: [{Common.stage_name(Starter, type), min_demand: 1, max_demand: 10}]]
+    encryption_subscription     = [subscribe_to: [{Common.stage_name(RemoteStorage, type), min_demand: 1, max_demand: 10}]]
+    notifier_subscription       = [subscribe_to: [{Common.stage_name(Encryption, type), min_demand: 1, max_demand: 10}]]
 
     Supervisor.init([
-        worker(Starter, [type], restart: :permanent),
-        worker(RemoteStorage, [remote_storage_subscription], restart: :permanent),
-        worker(Encryption, [encryption_subscription], restart: :permanent),
-        worker(Notifier, [notifier_subscription], restart: :permanent)
+      worker(Starter, [type], restart: :permanent),
+      worker(RemoteStorage, [[type, remote_storage_subscription]],
+             restart: :permanent),
+      worker(Encryption, [[type, encryption_subscription]],
+             restart: :permanent, name: Common.stage_name(Encryption, type)),
+      worker(Notifier, [[type, notifier_subscription]],
+             restart: :permanent, name: Common.stage_name(Notifier, type))
     ],
     strategy: :rest_for_one,
     name: name_for(type)
     )
   end
 
-  def name_for(type) do
+  defp name_for(type) do
     type = type
            |> Atom.to_string()
            |> String.capitalize()
