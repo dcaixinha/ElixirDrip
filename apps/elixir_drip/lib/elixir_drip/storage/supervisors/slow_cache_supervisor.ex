@@ -18,4 +18,14 @@ defmodule ElixirDrip.Storage.Supervisors.SlowCacheSupervisor do
     Process.sleep(@quick_nap)
     RealCache.get(id)
   end
+
+  def put_or_refresh(_id, _content) do
+    # just to avoid getting a compiler warning
+    :noop
+  end
+
+  def refresh(_id) do
+    # just to avoid getting a compiler warning
+    :noop
+  end
 end
