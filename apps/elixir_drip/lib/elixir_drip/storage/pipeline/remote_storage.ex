@@ -5,6 +5,8 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   require Logger
   alias   ElixirDrip.Storage
   alias   ElixirDrip.Storage.Provider
+  alias   ElixirDrip.Storage.Media
+  alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state :ok
 
@@ -33,20 +35,26 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
     %{task | media: Storage.set_upload_timestamp(media)}
   end
 
-  defp remote_storage_step(%{media: media, type: :download} = task) do
+  defp remote_storage_step(%{media: %Media{id: id, storage_key: storage_key}, type: :download} = task) do
     Process.sleep(2000)
-    # TODO: Check if there is a CacheWorker for this media.id
-    # If there is:
-    #   - Fetch the content from there and
-    #   put status: :original, content: fetched_content
-    #   on the returned task
-    # If not:
-    #   - Proceed normally, without any status
 
-    {:ok, content} = Provider.download(media.storage_key)
-    Logger.debug("#{inspect(self())}: Just downloaded media #{media.id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
+    result = case Cache.cache_content(id) do
+      nil ->
+        {:ok, content} = Provider.download(storage_key)
 
-    Map.put(task, :content, content)
+        Logger.debug("#{inspect(self())}: Just downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
+
+      %{content: content}
+
+      {:ok, content, _} ->
+        Logger.debug("#{inspect(self())}: Got media #{id} from cache, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
+
+
+        %{content: content, status: :original}
+    end
+
+
+    Map.merge(task, result)
   end
 end
 

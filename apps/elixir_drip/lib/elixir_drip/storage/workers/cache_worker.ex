@@ -33,8 +33,9 @@ defmodule ElixirDrip.Storage.Workers.CacheWorker do
 
     Process.cancel_timer(timer)
     new_timer = Process.send_after(self(), :expire, @expire_time)
-    Logger.debug("#{inspect(self())}: Canceled the previous expiration timer. Will now expire in #{Process.read_timer(new_timer)} milliseconds.")
+    expires_in = Process.read_timer(new_timer)
+    Logger.debug("#{inspect(self())}: Canceled the previous expiration timer. Will now expire in #{expires_in} milliseconds.")
 
-    {:reply, content, %{state | hits: hits + 1, timer: new_timer}}
+    {:reply, {:ok, content, expires_in}, %{state | hits: hits + 1, timer: new_timer}}
   end
 end
