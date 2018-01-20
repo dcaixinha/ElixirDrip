@@ -5,6 +5,7 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   use     GenStage
   require Logger
   alias   ElixirDrip.Storage.Pipeline.Common
+  alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
   def start_link([type, subscription_options]) do
     GenStage.start_link(__MODULE__,
@@ -24,9 +25,13 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
     {:noreply, encrypted, @dummy_state}
   end
 
-  defp encryption_step(%{media: media, content: content, type: :upload} = task) do
-    Logger.debug("#{inspect(self())}: Encrypting media #{media.id}, size: #{byte_size(content)} bytes.")
+  defp encryption_step(%{media: %{id: id}, content: content, type: :upload} = task) do
     Process.sleep(1000)
+
+    Cache.put(id, content)
+
+    Logger.debug("#{inspect(self())}: Encrypting media #{id}, size: #{byte_size(content)} bytes.")
+
     # TODO: Encrypt content with encryption key
     content = content <> "#encrypted"
 

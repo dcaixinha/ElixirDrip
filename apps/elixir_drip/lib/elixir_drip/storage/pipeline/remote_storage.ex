@@ -11,7 +11,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   }
   alias Storage.Supervisors.CacheSupervisor, as: Cache
 
-  @dummy_state :ok
+  @dummy_state []
 
   def start_link([type, subscription_options]) do
     GenStage.start_link(__MODULE__,
@@ -31,11 +31,12 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
     {:noreply, processed, @dummy_state}
   end
 
-  defp remote_storage_step(%{media: media, content: content, type: :upload} = task) do
-    Logger.debug("#{inspect(self())}: Uploading media #{media.id} to #{media.storage_key}, size: #{byte_size(content)} bytes.")
+  defp remote_storage_step(%{media: %{id: id, storage_key: storage_key} = media, content: content, type: :upload} = task) do
     Process.sleep(2000)
 
-    {:ok, :uploaded} = Provider.upload(media.storage_key, content)
+    Logger.debug("#{inspect(self())}: Uploading media #{id} to #{storage_key}, size: #{byte_size(content)} bytes.")
+
+    {:ok, :uploaded} = Provider.upload(storage_key, content)
 
     %{task | media: Storage.set_upload_timestamp(media)}
   end

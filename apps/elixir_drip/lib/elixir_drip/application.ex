@@ -14,6 +14,7 @@ defmodule ElixirDrip.Application do
     Workers.QueueWorker
   }
   alias ElixirDrip.Storage.Supervisors.Download.Pipeline, as: DownloadPipeline
+  alias ElixirDrip.Storage.Supervisors.Upload.Pipeline, as: UploadPipeline
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
@@ -24,7 +25,8 @@ defmodule ElixirDrip.Application do
         supervisor(CacheSupervisor, [], name: CacheSupervisor),
         worker(QueueWorker, [:download], id: :download_queue, restart: :permanent),
         worker(QueueWorker, [:upload], id: :upload_queue, restart: :permanent),
-        supervisor(DownloadPipeline, [:download]),
+        # supervisor(DownloadPipeline, [:download]),
+        supervisor(UploadPipeline, [:upload]),
       ],
       strategy: :one_for_one,
       name: ElixirDrip.Supervisor

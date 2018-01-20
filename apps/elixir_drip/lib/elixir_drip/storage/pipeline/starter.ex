@@ -15,7 +15,7 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   end
 
   def init(type) do
-    Logger.debug("#{inspect(self())}: Pipeline Starter started.")
+    Logger.debug("#{inspect(self())}: #{type} Pipeline Starter started.")
 
     {
       :producer,
