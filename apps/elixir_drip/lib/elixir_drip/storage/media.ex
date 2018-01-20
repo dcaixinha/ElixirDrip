@@ -3,7 +3,7 @@ defmodule ElixirDrip.Storage.Media do
 
   @primary_key {:id, ElixirDrip.Ecto.Ksuid, autogenerate: true}
   schema "storage_media" do
-    field :filename, :string
+    field :file_name, :string
     field :full_path, :string
     field :metadata, :map, default: %{}
     field :encryption_key, :string

@@ -7,6 +7,8 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   alias   ElixirDrip.Storage.Pipeline.Common
   alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
+  @encrypted_tag "#encrypted"
+
   def start_link([type, subscription_options]) do
     GenStage.start_link(__MODULE__,
                         subscription_options,
@@ -33,7 +35,7 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
     Logger.debug("#{inspect(self())}: Encrypting media #{id}, size: #{byte_size(content)} bytes.")
 
     # TODO: Encrypt content with encryption key
-    content = content <> "#encrypted"
+    content = content <> @encrypted_tag
 
     %{task | content: content}
   end
@@ -45,10 +47,12 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   end
 
   defp encryption_step(%{media: media, content: content, type: :download} = task) do
-    Logger.debug("#{inspect(self())}: Decrypting media #{media.id}, size: #{byte_size(content)} bytes.")
     Process.sleep(1000)
+
+    Logger.debug("#{inspect(self())}: Decrypting media #{media.id}, size: #{byte_size(content)} bytes.")
+
     # TODO: Decrypt content with encryption key
-    content = content <> "#decrypted"
+    content = Regex.replace(~r/#{@encrypted_tag}$/, content, "")
 
     %{task | content: content}
   end

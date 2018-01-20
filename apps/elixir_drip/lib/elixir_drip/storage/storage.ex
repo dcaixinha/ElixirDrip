@@ -1,28 +1,28 @@
 defmodule ElixirDrip.Storage do
   @moduledoc false
 
+  import Ecto.Query
   alias Ecto.Changeset
   alias ElixirDrip.Repo
   alias ElixirDrip.Utils
+  alias ElixirDrip.Storage.Workers.QueueWorker, as: Queue
   alias ElixirDrip.Storage.Media
-  alias ElixirDrip.Storage.Pipeline.{
-    Starter,
-    Encryption,
-    RemoteStorage,
-    Notifier
-  }
 
   @doc """
-    TODO: This will trigger an Upload request
-    that will be handled by the Upload Pipeline
-    for now, it sequentially creates the Media on the DB
-    and uploads it to the provider
+    It sequentially creates the Media on the DB and
+    triggers an Upload request handled by the Upload Pipeline.
   """
-  def store(filename, full_path, _content) do
-    with %Changeset{} = changeset         <- create_initial_changeset(filename, full_path),
-         %Media{storage_key: _key} = _media <- Repo.insert!(changeset)
+  def store(file_name, full_path, content) do
+    with %Changeset{} = changeset          <- create_initial_changeset(file_name, full_path),
+         %Media{storage_key: _key} = media <- Repo.insert!(changeset)
     do
-      # TODO: Enqueue upload event!
+      upload_task = %{
+        media: media,
+        content: content,
+        type: :upload
+      }
+
+      Queue.enqueue(Queue.Upload, upload_task)
 
       {:ok, :upload_enqueued}
     end
@@ -35,46 +35,46 @@ defmodule ElixirDrip.Storage do
   end
 
   @doc """
-    TODO: This will trigger a Download request
+    It triggers a Download request
     that will be handled by the Download Pipeline
   """
-  def retrieve(%Media{storage_key: _storage_key}) do
-    # Provider.download(storage_key)
-    # TODO: Enqueue download event
+  def retrieve(%Media{} = media) do
+    download_task = %{
+      media: media,
+      type: :download
+    }
+    Queue.enqueue(Queue.Download, download_task)
 
     {:ok, :download_enqueued}
   end
 
   def get_media(id), do: Repo.get!(Media, id)
 
-  def start_download_pipeline() do
-    dummy_arg = :ok
-    {:ok, starter} = GenStage.start_link(Starter, :download)
-    {:ok, remote_storage} = GenStage.start_link(RemoteStorage, dummy_arg)
-    {:ok, encryption} = GenStage.start_link(Encryption, dummy_arg)
-    {:ok, notifier} = GenStage.start_link(Notifier, dummy_arg)
-
-    GenStage.sync_subscribe(notifier, to: encryption, min_demand: 1, max_demand: 10)
-    GenStage.sync_subscribe(encryption, to: remote_storage, min_demand: 1, max_demand: 10)
-    GenStage.sync_subscribe(remote_storage, to: starter, min_demand: 1, max_demand: 10)
-
-    # GenStage.sync_subscribe(RemoteStorage, to: Starter)
-    # GenStage.sync_subscribe(Encryption, to: RemoteStorage)
-    # GenStage.sync_subscribe(Notifier, to: Encryption)
+  def list_all_media do
+    Media
+    |> Repo.all()
   end
 
-  defp create_initial_changeset(filename, full_path) do
+  def get_last_media do
+    Repo.one(
+      from media in Media,
+      order_by: [desc: media.id],
+      limit: 1
+    )
+  end
+
+  defp create_initial_changeset(file_name, full_path) do
     id = Ksuid.generate()
 
     changeset(%Media{}, %{
       id: id,
-      storage_key: generate_storage_key(id, filename),
-      filename: filename,
+      storage_key: generate_storage_key(id, file_name),
+      file_name: file_name,
       full_path: full_path
     })
   end
 
-  defp generate_storage_key(id, filename), do: id <> "_" <> Utils.generate_timestamp() <> Path.extname(filename)
+  defp generate_storage_key(id, file_name), do: id <> "_" <> Utils.generate_timestamp() <> Path.extname(file_name)
 
   defp changeset(%Media{} = media, attrs) do
     media
@@ -84,10 +84,10 @@ defmodule ElixirDrip.Storage do
 
   defp cast_attrs do
     [
-      :filename, :full_path, :metadata,
+      :id, :file_name, :full_path, :metadata,
       :encryption_key, :storage_key, :uploaded_at
     ]
   end
 
-  defp required_attrs, do: [:filename, :full_path, :storage_key]
+  defp required_attrs, do: [:id, :file_name, :full_path, :storage_key]
 end

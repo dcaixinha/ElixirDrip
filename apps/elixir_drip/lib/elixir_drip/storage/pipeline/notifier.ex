@@ -32,9 +32,9 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
   end
 
   defp notify_step(%{media: %{id: id}, content: content, type: :download}) do
-    # TODO: Invoke the notifier instead!
     Cache.put_or_refresh(id, content)
 
+    # TODO: Invoke the notifier instead!
     Logger.debug("#{inspect(self())}: NOTIFICATION! Downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
   end
 end
