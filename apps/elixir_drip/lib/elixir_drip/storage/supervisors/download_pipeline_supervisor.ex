@@ -1,6 +1,6 @@
-defmodule ElixirDrip.Storage.Supervisors.PipelineSupervisor do
+defmodule ElixirDrip.Storage.Supervisors.Download.Pipeline do
   @moduledoc """
-  A pipeline supervisor that will spawn and supervise all the GenStage processes that compose the pipeline.
+  A pipeline supervisor that will spawn and supervise all the GenStage processes that compose the download pipeline.
   """
 
   use   Supervisor
@@ -31,15 +31,7 @@ defmodule ElixirDrip.Storage.Supervisors.PipelineSupervisor do
              restart: :permanent, name: Common.stage_name(Notifier, type))
     ],
     strategy: :rest_for_one,
-    name: name_for(type)
+    name: __MODULE__
     )
-  end
-
-  defp name_for(type) do
-    type = type
-           |> Atom.to_string()
-           |> String.capitalize()
-
-    Module.concat(__MODULE__, type)
   end
 end
