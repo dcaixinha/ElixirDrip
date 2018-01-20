@@ -34,7 +34,7 @@ defmodule ElixirDrip.Utils.Benchmarks do
     |> Enum.map(fn it ->
       content = File.read!("secrets/big.txt")
       id = to_string(it)
-      Cache.cache_for(id, content)
+      Cache.put(id, content)
       id
     end)
   end

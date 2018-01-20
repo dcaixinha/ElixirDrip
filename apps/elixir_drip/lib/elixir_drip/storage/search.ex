@@ -42,7 +42,7 @@ defmodule ElixirDrip.Storage.Search do
 
   def search_for(media_id, expression) do
     raw_content_lines = media_id
-                        |> Cache.cache_content()
+                        |> Cache.get()
                         |> String.split("\n")
 
     result = raw_content_lines

@@ -19,11 +19,24 @@ defmodule ElixirDrip.Storage.Supervisors.CacheSupervisor do
     Supervisor.init([cache_worker_spec], strategy: :simple_one_for_one)
   end
 
-  def cache_for(id, content) when is_binary(id) and is_bitstring(content) do
-    Supervisor.start_child(__MODULE__, [id, content])
+  def put(id, content) when is_binary(id) and is_bitstring(content),
+    do: Supervisor.start_child(__MODULE__, [id, content])
+
+  def refresh(id) when is_binary(id) do
+    case find_cache(id) do
+      nil -> nil
+      pid -> CacheWorker.refresh(pid)
+    end
   end
 
-  def cache_content(id) when is_binary(id) do
+  def put_or_refresh(id, content) when is_binary(id) and is_bitstring(content) do
+    case refresh(id) do
+      nil    -> put(id, content)
+      result -> result
+    end
+  end
+
+  def get(id) when is_binary(id) do
     case find_cache(id) do
       nil -> nil
       pid -> CacheWorker.get_media(pid)

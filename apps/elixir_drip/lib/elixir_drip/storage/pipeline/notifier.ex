@@ -4,6 +4,7 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
   use     GenStage
   require Logger
   alias   ElixirDrip.Storage.Pipeline.Common
+  alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state :ok
 
@@ -30,8 +31,11 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
     Logger.debug("#{inspect(self())}: NOTIFICATION! Uploaded media #{media.id} to #{media.storage_key} with size: #{byte_size(content)} bytes.")
   end
 
-  defp notify_step(%{media: media, content: content, type: :download}) do
-    Logger.debug("#{inspect(self())}: NOTIFICATION! Downloaded media #{media.id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
+  defp notify_step(%{media: %{id: id}, content: content, type: :download}) do
+    # TODO: Invoke the notifier instead!
+    Cache.put_or_refresh(id, content)
+
+    Logger.debug("#{inspect(self())}: NOTIFICATION! Downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
   end
 end
 

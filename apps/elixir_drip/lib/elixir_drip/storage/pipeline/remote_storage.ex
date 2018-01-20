@@ -43,7 +43,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   defp remote_storage_step(%{media: %Media{id: id, storage_key: storage_key}, type: :download} = task) do
     Process.sleep(2000)
 
-    result = case Cache.cache_content(id) do
+    result = case Cache.get(id) do
       nil ->
         {:ok, content} = Provider.download(storage_key)
 
@@ -51,7 +51,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
       %{content: content}
 
-      {:ok, content, _} ->
+      {:ok, content} ->
         Logger.debug("#{inspect(self())}: Got media #{id} from cache, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
 
 

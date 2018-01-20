@@ -6,16 +6,16 @@ defmodule ElixirDrip.Storage.Supervisors.SlowCacheSupervisor do
 
   @quick_nap 1_000
 
-  def cache_for(id, content) do
+  def put(id, content) do
     Logger.debug("Spawning a slow cache for #{id}, content size: #{byte_size(content)} bytes.")
 
-    RealCache.cache_for(id, content)
+    RealCache.put(id, content)
   end
 
-  def cache_content(id) do
+  def get(id) do
     Logger.debug("Fetching cached content for #{id}...")
 
     Process.sleep(@quick_nap)
-    RealCache.cache_content(id)
+    RealCache.get(id)
   end
 end
