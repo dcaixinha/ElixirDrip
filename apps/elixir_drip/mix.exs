@@ -41,7 +41,8 @@ defmodule ElixirDrip.Mixfile do
       {:ksuid, "~> 0.1.2"},
       {:arc, github: "stavro/arc", override: true},
       {:arc_gcs, "~> 0.0.3"},
-      {:gen_stage, "~> 0.13.0"}
+      {:flow, "~> 0.12.0"},
+      {:gen_stage, "~> 0.13.0", override: true}
     ]
   end
 
