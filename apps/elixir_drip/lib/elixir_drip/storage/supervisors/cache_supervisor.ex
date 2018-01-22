@@ -1,26 +1,27 @@
 defmodule ElixirDrip.Storage.Supervisors.CacheSupervisor do
   @behaviour ElixirDrip.Behaviours.CacheSupervisor
 
-  use   Supervisor
+  use   DynamicSupervisor
   alias ElixirDrip.Storage.Workers.CacheWorker
 
   def start_link() do
-    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
+    DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_arg) do
-    cache_worker_spec =
+    DynamicSupervisor.init(strategy: :one_for_one)
+  end
+
+  defp cache_worker_spec(id, content) do
       Supervisor.child_spec(
         CacheWorker,
-        start: {CacheWorker, :start_link, []},
+        start: {CacheWorker, :start_link, [id, content]},
         restart: :temporary
       )
-
-    Supervisor.init([cache_worker_spec], strategy: :simple_one_for_one)
   end
 
   def put(id, content) when is_binary(id) and is_bitstring(content),
-    do: Supervisor.start_child(__MODULE__, [id, content])
+    do: DynamicSupervisor.start_child(__MODULE__, cache_worker_spec(id, content))
 
   def refresh(id) when is_binary(id) do
     case find_cache(id) do

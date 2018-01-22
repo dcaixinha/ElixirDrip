@@ -1,4 +1,4 @@
-FROM bitwalker/alpine-elixir:1.5.2
+FROM bitwalker/alpine-elixir:latest
 
 MAINTAINER ElixirDrip "dev@elixirdrip.io"
 
