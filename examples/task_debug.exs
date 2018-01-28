@@ -1,5 +1,5 @@
 strings = ["fast", "long string", "cool", "longer string", "there are many of these", "quick", "three", "too long"]
-timeout = 20_000
+timeout = 10_000
 
 lambda = (fn text ->
     chars = text |> String.codepoints |> Enum.count
@@ -42,7 +42,7 @@ tasks_result = tasks
                |> Enum.map(fn result ->
                  case result do
                    {:ok, result} -> result
-                   _             -> nil
+                   _             -> "timeout"
                  end
                end)
                |> Enum.to_list()

@@ -21,12 +21,12 @@ defmodule ElixirDrip.Utils.Benchmarks do
     |> Search.task_search_for(search_term, timeout)
   end
 
-  def measured_task_async_search(search_term \\ "Polk", media_items \\ 10, concurrency, timeout), do: Utils.measure(fn -> task_async_search(search_term, media_items, concurrency, timeout) end)
+  def measured_task_stream_search(search_term \\ "Polk", media_items \\ 10, concurrency, timeout), do: Utils.measure(fn -> task_stream_search(search_term, media_items, concurrency, timeout) end)
 
-  def task_async_search(search_term \\ "Polk", media_items \\ 10, concurrency, timeout) do
+  def task_stream_search(search_term \\ "Polk", media_items \\ 10, concurrency, timeout) do
     media_items
     |> prepare_cache()
-    |> Search.task_async_search_for(search_term, concurrency, timeout)
+    |> Search.task_stream_search_for(search_term, concurrency, timeout)
   end
 
   def prepare_cache(media_items) do

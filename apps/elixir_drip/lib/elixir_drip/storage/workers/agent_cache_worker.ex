@@ -9,6 +9,12 @@ defmodule ElixirDrip.Storage.Workers.AgentCacheWorker do
     end, name: CacheWorker.name_for(media_id))
   end
 
+  def handle_info(message, state) do
+    Logger.debug("#{inspect(self())} Just got an OOB message: #{message}")
+
+    {:noreply, state}
+  end
+
   def get_media(pid) do
     Agent.get_and_update(pid,
                          fn (%{hits: hits, content: content} = state) ->
