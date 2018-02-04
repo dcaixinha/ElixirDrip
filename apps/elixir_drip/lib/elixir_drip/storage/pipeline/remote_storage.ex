@@ -4,11 +4,8 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   use     GenStage
   require Logger
   alias   ElixirDrip.Storage
-  alias   Storage.{
-    Provider,
-    Media
-  }
-  alias Storage.Supervisors.CacheSupervisor, as: Cache
+  alias   Storage.Provider
+  alias   Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state []
 
@@ -37,7 +34,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
     %{task | media: Storage.set_upload_timestamp(media)}
   end
 
-  defp remote_storage_step(%{media: %Media{id: id, storage_key: storage_key}, type: :download} = task) do
+  defp remote_storage_step(%{media: %{id: id, storage_key: storage_key}, type: :download} = task) do
     Process.sleep(2000)
 
     result = case Cache.get(id) do

@@ -7,6 +7,7 @@ defmodule ElixirDrip.Storage do
   alias ElixirDrip.Utils
   alias ElixirDrip.Storage.Workers.QueueWorker, as: Queue
   alias ElixirDrip.Storage.Media
+  alias ElixirDrip.Storage.Providers.Encryption.Simple, as: Encryption
 
   @doc """
     It sequentially creates the Media on the DB and
@@ -69,6 +70,7 @@ defmodule ElixirDrip.Storage do
     changeset(%Media{}, %{
       id: id,
       storage_key: generate_storage_key(id, file_name),
+      encryption_key: Encryption.generate_key(),
       file_name: file_name,
       full_path: full_path
     })
