@@ -6,7 +6,7 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
   alias   ElixirDrip.Storage.Pipeline.Common
   alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
-  @dummy_state :ok
+  @dummy_state []
 
   def start_link([type, subscription_options]) do
     GenStage.start_link(__MODULE__,

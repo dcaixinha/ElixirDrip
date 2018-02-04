@@ -25,8 +25,8 @@ defmodule ElixirDrip.Application do
         supervisor(CacheSupervisor, [], name: CacheSupervisor),
         worker(QueueWorker, [:download], id: :download_queue, restart: :permanent),
         worker(QueueWorker, [:upload], id: :upload_queue, restart: :permanent),
-        supervisor(DownloadPipeline, [:download]),
-        supervisor(UploadPipeline, [:upload]),
+        supervisor(DownloadPipeline, []),
+        supervisor(UploadPipeline, []),
       ],
       strategy: :one_for_one,
       name: ElixirDrip.Supervisor
