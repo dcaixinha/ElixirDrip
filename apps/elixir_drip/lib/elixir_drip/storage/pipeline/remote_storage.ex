@@ -6,18 +6,14 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   alias   ElixirDrip.Storage
   alias   Storage.{
     Provider,
-    Media,
-    Pipeline.Common
+    Media
   }
   alias Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state []
 
-  def start_link([type, subscription_options]) do
-    GenStage.start_link(__MODULE__,
-                        subscription_options,
-                        name: Common.stage_name(__MODULE__, type))
-  end
+  def start_link(name, subscription_options),
+    do: GenStage.start_link(__MODULE__, subscription_options, name: name)
 
   def init(subscription_options) do
     Logger.debug("#{inspect(self())}: Pipeline RemoteStorage started. Options: #{inspect(subscription_options)}")

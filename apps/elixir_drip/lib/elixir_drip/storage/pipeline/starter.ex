@@ -3,15 +3,12 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
 
   use     GenStage
   require Logger
-  alias   ElixirDrip.Storage.{
-    Pipeline.Common,
-    Workers.QueueWorker
-  }
+  alias   ElixirDrip.Storage.Workers.QueueWorker
 
   @queue_polling 5000
 
-  def start_link(type) do
-    GenStage.start_link(__MODULE__, type, name: Common.stage_name(__MODULE__, type))
+  def start_link(name, type) do
+    GenStage.start_link(__MODULE__, type, name: name)
   end
 
   def init(type) do

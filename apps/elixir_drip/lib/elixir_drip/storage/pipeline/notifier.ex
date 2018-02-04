@@ -3,16 +3,12 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
 
   use     GenStage
   require Logger
-  alias   ElixirDrip.Storage.Pipeline.Common
   alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
   @dummy_state []
 
-  def start_link([type, subscription_options]) do
-    GenStage.start_link(__MODULE__,
-                        subscription_options,
-                        name: Common.stage_name(__MODULE__, type))
-  end
+  def start_link(name, subscription_options), do:
+    GenStage.start_link(__MODULE__, subscription_options, name: name)
 
   def init(subscription_options) do
     Logger.debug("#{inspect(self())}: Pipeline Notifier started. Options: #{inspect(subscription_options)}")
