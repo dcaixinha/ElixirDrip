@@ -43,7 +43,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
         Logger.debug("#{inspect(self())}: Just downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
 
-      %{content: content}
+        %{content: content}
 
       {:ok, content} ->
         Logger.debug("#{inspect(self())}: Got media #{id} from cache, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
@@ -51,7 +51,6 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
         %{content: content, status: :original}
     end
-
 
     Map.merge(task, result)
   end

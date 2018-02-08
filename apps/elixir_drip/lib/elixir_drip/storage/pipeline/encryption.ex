@@ -40,10 +40,12 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
 
   defp encryption_step(%{media: %{id: id, encryption_key: encryption_key}, content: content, type: :download} = task) do
     Process.sleep(1000)
-
     Logger.debug("#{inspect(self())}: Decrypting media #{id}, size: #{byte_size(content)} bytes.")
 
-    %{task | content: Provider.decrypt(content, encryption_key)}
+    clear_content = Provider.decrypt(content, encryption_key)
+    Cache.put_or_refresh(id, clear_content)
+
+    %{task | content: clear_content}
   end
 end
 

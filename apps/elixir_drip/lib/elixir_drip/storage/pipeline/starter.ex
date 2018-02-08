@@ -5,7 +5,8 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   require Logger
   alias   ElixirDrip.Storage.Workers.QueueWorker
 
-  @queue_polling 5000
+  # @queue_polling 5000
+  @queue_polling 30 * 1000
 
   def start_link(name, type) do
     GenStage.start_link(__MODULE__, type, name: name)
@@ -25,6 +26,7 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   end
 
   def handle_demand(demand, %{queue: queue, pending: pending} = state) when demand > 0 do
+    Logger.debug("#{inspect(self())}: Starter(#{inspect(queue)}) received demand of #{demand}, pending = #{pending}.")
     total_demand = demand + pending
 
     send_events_from_queue(queue, total_demand, state)
