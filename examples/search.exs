@@ -1,4 +1,4 @@
-Code.eval_file("sample_data.exs", "./examples")
+import_file("./examples/sample_data.exs")
 
 alias ElixirDrip.Search.SampleData, as: Data
 
