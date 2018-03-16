@@ -4,13 +4,21 @@ defmodule ParallelGenStage.GuineaPigSupervisor do
   alias ParallelGenStage.GuineaProducerConsumer, as: ProducerConsumer
   alias ParallelGenStage.GuineaConsumer, as: Consumer
 
-  use Pipeliner, name: :zaza
+  use Pipeliner,
+    name: :zaza, min_demand: 4, max_demand: 8
 
-  start Producer, count: 1
-  start Producer, args: [0], count: 1
-  step ProducerConsumer, args: ["A", "B", "C"], count: 3, min_demand: 1, max_demand: 10
-  step ProducerConsumer, args: ["G", "H", "I"], count: 3, min_demand: 1, max_demand: 3
-  finish Consumer, args: ["X", "Y"], count: 2, min_demand: 1, max_demand: 5
+  start Producer,
+    args: [0], count: 2
+  step ProducerConsumer,
+    args: ["A", "B", "C"], count: 3, min_demand: 1, max_demand: 10
+  step ProducerConsumer,
+    args: ["G", "H", "I"], count: 3, min_demand: 1, max_demand: 3
+  finish Consumer,
+    args: ["X", "Y"], count: 2, min_demand: 1, max_demand: 5
+
+  def check_it() do
+    "#{@default_count} #{@default_min_demand} #{@default_max_demand}"
+  end
 
   def init(_) do
     producer_initials = [0, 1000]
