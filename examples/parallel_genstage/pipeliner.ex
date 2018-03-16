@@ -23,6 +23,8 @@ defmodule ParallelGenStage.Pipeliner do
       @default_min_demand unquote(default_min_demand)
       @default_max_demand unquote(default_max_demand)
 
+      Module.register_attribute(__MODULE__, :pipeline_steps, accumulate: true)
+
       def start_link() do
         Supervisor.start_link(__MODULE__, [], name: unquote(name))
       end
@@ -33,7 +35,8 @@ defmodule ParallelGenStage.Pipeliner do
     quote bind_quoted: [producer: producer, opts: opts] do
       opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      IO.puts "START: #{producer}, #{inspect(opts[:args])}, #{inspect(opts)}"
+      @pipeline_steps [producer: producer, args: opts[:args], options: opts[:options]]
+      IO.puts "START: #{producer}, #{inspect(opts)}"
     end
   end
 
@@ -41,7 +44,8 @@ defmodule ParallelGenStage.Pipeliner do
     quote bind_quoted: [producer_consumer: producer_consumer, opts: opts] do
       opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      IO.puts "STEP: #{producer_consumer}, #{inspect(opts[:args])}, #{inspect(opts)}"
+      @pipeline_steps [producer_consumer: producer_consumer, args: opts[:args], options: opts[:options]]
+      IO.puts "STEP: #{producer_consumer}, #{inspect(opts)}"
     end
   end
 
@@ -49,11 +53,22 @@ defmodule ParallelGenStage.Pipeliner do
     quote bind_quoted: [consumer: consumer, opts: opts] do
       opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      IO.puts "CONSUMER: #{consumer}, #{inspect(opts[:args])}, #{inspect(opts)}"
+      @pipeline_steps [consumer: consumer, args: opts[:args], options: opts[:options]]
+      IO.puts "CONSUMER: #{consumer}, #{inspect(opts)}"
     end
   end
 
-  def get_options_and_args(options, default_count, default_min_demand, default_max_demand) do
+  def get_options_and_args(opts, default_count, default_min_demand, default_max_demand) do
+    options_and_args = fill_options_and_args(opts, default_count, default_min_demand, default_max_demand)
+
+    options = Keyword.drop(options_and_args, [:args])
+
+    options_and_args
+    |> Enum.filter(fn {k,_} -> k == :args end)
+    |> Keyword.put(:options, options)
+  end
+
+  def fill_options_and_args(options, default_count, default_min_demand, default_max_demand) do
     result = [{:count, default_count},
               {:min_demand, default_min_demand},
               {:max_demand, default_max_demand}]
