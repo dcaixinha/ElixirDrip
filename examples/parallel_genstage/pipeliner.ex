@@ -1,5 +1,13 @@
 defmodule ParallelGenStage.Pipeliner do
-  @pipeliner_default_count 2
+  # TODO: REMOVE THESE ALIASES
+  alias ParallelGenStage.Pipeliner
+  alias ParallelGenStage.GuineaProducer, as: Producer
+  alias ParallelGenStage.GuineaProducerConsumer, as: ProducerConsumer
+  alias ParallelGenStage.GuineaConsumer, as: Consumer
+
+  import Supervisor.Spec
+
+  @pipeliner_default_count 4
   @pipeliner_default_min_demand 44
   @pipeliner_default_max_demand 88
 
@@ -27,6 +35,60 @@ defmodule ParallelGenStage.Pipeliner do
 
       def start_link() do
         Supervisor.start_link(__MODULE__, [], name: unquote(name))
+      end
+
+      @before_compile unquote(__MODULE__)
+
+      def init(_) do
+
+        producer_step = get_pipeline_steps() |> Enum.at(0)
+        IO.puts "PRODUCER specs:"
+        {producer_names, producer_worker_specs} = get_worker_specs(producer_step)
+        IO.inspect(producer_names)
+        IO.inspect(producer_worker_specs)
+
+        producer_consumer_step = get_pipeline_steps() |> Enum.at(1)
+        IO.puts "PRODUCER CONSUMER specs:"
+
+        {
+          producer_consumer_names,
+          producer_consumer_worker_specs
+        } = producer_consumer_step
+            |> Enum.concat(names_to_subscribe: producer_names)
+            |> get_worker_specs()
+
+        IO.inspect(producer_consumer_names)
+        IO.inspect(producer_consumer_worker_specs)
+
+        consumer_step = get_pipeline_steps() |> Enum.at(3)
+        IO.puts "CONSUMER specs:"
+
+        {
+          consumer_names,
+          consumer_worker_specs
+        } = consumer_step
+            |> Enum.concat(names_to_subscribe: producer_consumer_names)
+            |> get_worker_specs()
+
+        IO.inspect(consumer_names)
+        IO.inspect(consumer_worker_specs)
+
+        workers_to_start = get_worker_specs()
+                           |> List.flatten()
+
+        Supervisor.init(
+          workers_to_start,
+          strategy: :rest_for_one,
+          name: __MODULE__
+        )
+      end
+    end
+  end
+
+  defmacro __before_compile__(_environment) do
+    quote do
+      def get_pipeline_steps() do
+        @pipeline_steps |> Enum.reverse()
       end
     end
   end
@@ -56,6 +118,122 @@ defmodule ParallelGenStage.Pipeliner do
       @pipeline_steps [consumer: consumer, args: opts[:args], options: opts[:options]]
       IO.puts "CONSUMER: #{consumer}, #{inspect(opts)}"
     end
+  end
+
+  def get_worker_specs() do
+    producer_initials = [0, 1000]
+    producer_workers = producer_initials
+                       |> Enum.map(fn initial ->
+                         worker(Producer, [initial], id: String.to_atom("p_" <> to_string(initial)))
+                       end)
+
+    producer_consumer_suffixes_lvl1 = ["G", "H", "I"]
+
+    producer_consumer_subscriptions_lvl1 = producer_initials
+                             |> Enum.map(fn initial ->
+                               {
+                                 Module.concat(Producer, to_string(initial)),
+                                 min_demand: 1, max_demand: 5
+                               }
+                             end)
+
+    producer_consumer_workers_lvl1 = producer_consumer_suffixes_lvl1
+                                |> Enum.map(fn suffix ->
+                                  worker(
+                                    ProducerConsumer,
+                                    [suffix, producer_consumer_subscriptions_lvl1],
+                                    id: String.to_atom("pc1_" <> suffix)
+                                  )
+                                end)
+
+    producer_consumer_suffixes_lvl2 = ["A", "B", "C"]
+
+    product_consumer_subscriptions_lvl2 = producer_consumer_suffixes_lvl1
+                             |> Enum.map(fn suffix ->
+                               {
+                                 Module.concat(ProducerConsumer, suffix),
+                                 min_demand: 1, max_demand: 5
+                               }
+                             end)
+
+    producer_consumer_workers_lvl2 = producer_consumer_suffixes_lvl2
+                                |> Enum.map(fn suffix ->
+                                  worker(
+                                    ProducerConsumer,
+                                    [suffix, product_consumer_subscriptions_lvl2],
+                                    id: String.to_atom("pc2_" <> suffix)
+                                  )
+                                end)
+
+    consumer_subscriptions = producer_consumer_suffixes_lvl2
+                             |> Enum.map(fn suffix ->
+                               {
+                                 Module.concat(ProducerConsumer, suffix),
+                                 min_demand: 1, max_demand: 5
+                               }
+                             end)
+
+    consumer_workers = ["X", "Y"]
+                       |> Enum.map(fn suffix ->
+                         worker(
+                           Consumer,
+                           ["Consumer" <> suffix, consumer_subscriptions],
+                           id: String.to_atom("c_" <> suffix)
+                         )
+                       end)
+
+    [
+      producer_workers,
+      producer_consumer_workers_lvl1,
+      producer_consumer_workers_lvl2,
+      consumer_workers
+    ]
+  end
+
+  def get_worker_specs(producer: producer, args: args, options: options) do
+    {count, options} = Keyword.pop(options, :count)
+
+    1..count
+    |> Enum.map(fn _ ->
+      name = random_name(producer)
+      {name, worker(producer, args, name: name, id: Atom.to_string(name))}
+    end)
+    |> Enum.unzip()
+  end
+
+  def get_worker_specs(producer_consumer: producer_consumer,
+                       args: args, options: options,
+                       names_to_subscribe: names_to_subscribe),
+    do: get_worker_specs_with_subscriptions(producer_consumer,
+                         args: args, options: options,
+                         names_to_subscribe: names_to_subscribe)
+
+  def get_worker_specs(consumer: consumer,
+                       args: args, options: options,
+                       names_to_subscribe: names_to_subscribe),
+    do: get_worker_specs_with_subscriptions(consumer,
+                         args: args, options: options,
+                         names_to_subscribe: names_to_subscribe)
+
+  def get_worker_specs_with_subscriptions(consumer,
+                       args: args, options: options,
+                       names_to_subscribe: names_to_subscribe) do
+
+    {count, options} = Keyword.pop(options, :count)
+
+    subscriptions = names_to_subscribe
+                    |> Enum.map(fn to_subscribe ->
+                      {to_subscribe, options}
+                    end)
+
+    1..count
+    |> Enum.map(fn _ ->
+      name = random_name(consumer)
+      args = args ++ [subscriptions]
+
+      {name, worker(consumer, args, name: name, id: Atom.to_string(name))}
+    end)
+    |> Enum.unzip()
   end
 
   def get_options_and_args(opts, default_count, default_min_demand, default_max_demand) do

@@ -8,8 +8,6 @@ defmodule ParallelGenStage.GuineaPigSupervisor do
     name: :zaza, min_demand: 4, max_demand: 8
 
   start Producer,
-    count: 2
-  start Producer,
     args: [0], count: 2
   step ProducerConsumer,
     args: ["A", "B", "C"], count: 3, min_demand: 1, max_demand: 10
@@ -18,12 +16,7 @@ defmodule ParallelGenStage.GuineaPigSupervisor do
   finish Consumer,
     args: ["X", "Y"], count: 2, min_demand: 1, max_demand: 5
 
-  def check_it() do
-    "#{@default_count} #{@default_min_demand} #{@default_max_demand}"
-    @pipeline_steps |> Enum.reverse()
-  end
-
-  def init(_) do
+  def old_init(_) do
     producer_initials = [0, 1000]
     producer_workers = producer_initials
                        |> Enum.map(fn initial ->
