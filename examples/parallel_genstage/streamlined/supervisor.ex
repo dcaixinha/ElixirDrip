@@ -1,8 +1,8 @@
-defmodule ParallelGenStage.GuineaSupervisor do
+defmodule ParallelGenStage.StreamlinedSupervisor do
   alias ElixirDrip.Pipeliner
-  alias ParallelGenStage.GuineaProducer, as: Producer
-  alias ParallelGenStage.GuineaProducerConsumer, as: ProducerConsumer
-  alias ParallelGenStage.GuineaConsumer, as: Consumer
+  alias ParallelGenStage.StreamlinedProducer, as: Producer
+  alias ParallelGenStage.StreamlinedProducerConsumer, as: ProducerConsumer
+  alias ParallelGenStage.StreamlinedConsumer, as: Consumer
 
   use Pipeliner,
     name: :guinea_pipeline, min_demand: 4, max_demand: 8

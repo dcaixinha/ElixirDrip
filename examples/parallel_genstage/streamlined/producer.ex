@@ -1,4 +1,4 @@
-defmodule ParallelGenStage.GuineaProducer do
+defmodule ParallelGenStage.StreamlinedProducer do
   use ElixirDrip.Pipeliner.Producer, args: [:initial]
 
   def handle_demand(demand, counter) do
