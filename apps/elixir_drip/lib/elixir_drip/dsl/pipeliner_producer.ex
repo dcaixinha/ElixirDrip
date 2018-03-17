@@ -3,6 +3,8 @@ defmodule ElixirDrip.Pipeliner.Producer do
 
   defmacro __using__(opts) do
     args = get_or_default(opts, :args, [])
+    prepare_function = get_or_default(opts, :prepare_state)
+
     optional_args = create_args(__MODULE__, args)
     required_args = create_args(__MODULE__, [:name])
 
@@ -20,7 +22,16 @@ defmodule ElixirDrip.Pipeliner.Producer do
         GenStage.start_link(__MODULE__, unquote(optional_args), name: name)
       end
 
-      def init(args), do: {:producer, args}
+      def init(args) do
+        args = prepare_args(unquote(prepare_function), args)
+
+        {:producer, args}
+      end
+
+      defp prepare_args(nil, args), do: args
+      defp prepare_args(function, args) do
+        apply(__MODULE__, function, [args])
+      end
     end
   end
 
