@@ -1,13 +1,5 @@
 defmodule ParallelGenStage.GuineaProducerConsumer do
-  use GenStage
-
-  def start_link(suffix, name, sub_options) do
-    GenStage.start_link(__MODULE__, {suffix, sub_options}, name: name)
-  end
-
-  def init({suffix, sub_options}) do
-    {:producer_consumer, suffix, subscribe_to: sub_options}
-  end
+  use ParallelGenStage.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
 
   def handle_events(events, _from, suffix) do
     processed_events =
