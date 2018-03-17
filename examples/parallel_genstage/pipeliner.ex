@@ -47,18 +47,37 @@ defmodule ParallelGenStage.Pipeliner do
         IO.inspect(producer_names)
         IO.inspect(producer_worker_specs)
 
+        # -----------------
+
         producer_consumer_step = get_pipeline_steps() |> Enum.at(1)
-        IO.puts "PRODUCER CONSUMER specs:"
+        IO.puts "PRODUCER CONSUMER(1) specs:"
 
         {
-          producer_consumer_names,
-          producer_consumer_worker_specs
+          producer_consumer_1_names,
+          producer_consumer_worker_1_specs
         } = producer_consumer_step
             |> Enum.concat(names_to_subscribe: producer_names)
             |> get_worker_specs()
 
-        IO.inspect(producer_consumer_names)
-        IO.inspect(producer_consumer_worker_specs)
+        IO.inspect(producer_consumer_1_names)
+        IO.inspect(producer_consumer_worker_1_specs)
+
+        # ------------------
+
+        producer_consumer_step = get_pipeline_steps() |> Enum.at(2)
+        IO.puts "PRODUCER CONSUMER(2) specs:"
+
+        {
+          producer_consumer_2_names,
+          producer_consumer_worker_2_specs
+        } = producer_consumer_step
+            |> Enum.concat(names_to_subscribe: producer_consumer_1_names)
+            |> get_worker_specs()
+
+        IO.inspect(producer_consumer_2_names)
+        IO.inspect(producer_consumer_worker_2_specs)
+
+        # ------------------
 
         consumer_step = get_pipeline_steps() |> Enum.at(3)
         IO.puts "CONSUMER specs:"
@@ -67,14 +86,17 @@ defmodule ParallelGenStage.Pipeliner do
           consumer_names,
           consumer_worker_specs
         } = consumer_step
-            |> Enum.concat(names_to_subscribe: producer_consumer_names)
+            |> Enum.concat(names_to_subscribe: producer_consumer_2_names)
             |> get_worker_specs()
 
         IO.inspect(consumer_names)
         IO.inspect(consumer_worker_specs)
 
-        workers_to_start = get_worker_specs()
-                           |> List.flatten()
+        workers_to_start =
+          producer_worker_specs ++ producer_consumer_worker_1_specs ++ producer_consumer_worker_2_specs ++ consumer_worker_specs
+
+        # workers_to_start = get_worker_specs()
+        #                    |> List.flatten()
 
         Supervisor.init(
           workers_to_start,
@@ -196,7 +218,7 @@ defmodule ParallelGenStage.Pipeliner do
     1..count
     |> Enum.map(fn _ ->
       name = random_name(producer)
-      {name, worker(producer, args, name: name, id: Atom.to_string(name))}
+      {name, worker(producer, args ++ [name], id: Atom.to_string(name))}
     end)
     |> Enum.unzip()
   end
@@ -229,14 +251,15 @@ defmodule ParallelGenStage.Pipeliner do
     1..count
     |> Enum.map(fn _ ->
       name = random_name(consumer)
-      args = args ++ [subscriptions]
+      args = args ++ [name, subscriptions]
 
-      {name, worker(consumer, args, name: name, id: Atom.to_string(name))}
+      {name, worker(consumer, args, id: Atom.to_string(name))}
     end)
     |> Enum.unzip()
   end
 
   def get_options_and_args(opts, default_count, default_min_demand, default_max_demand) do
+
     options_and_args = fill_options_and_args(opts, default_count, default_min_demand, default_max_demand)
 
     options = Keyword.drop(options_and_args, [:args])

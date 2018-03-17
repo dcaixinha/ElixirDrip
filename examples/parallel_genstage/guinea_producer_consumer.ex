@@ -1,8 +1,8 @@
 defmodule ParallelGenStage.GuineaProducerConsumer do
   use GenStage
 
-  def start_link(suffix, sub_options) do
-    GenStage.start_link(__MODULE__, {suffix, sub_options}, name: Module.concat(__MODULE__, suffix))
+  def start_link(suffix, name, sub_options) do
+    GenStage.start_link(__MODULE__, {suffix, sub_options}, name: name)
   end
 
   def init({suffix, sub_options}) do

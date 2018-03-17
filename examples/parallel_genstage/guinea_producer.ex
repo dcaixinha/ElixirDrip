@@ -1,8 +1,8 @@
 defmodule ParallelGenStage.GuineaProducer do
   use GenStage
 
-  def start_link(initial \\ 0) do
-    GenStage.start_link(__MODULE__, initial, name: Module.concat(__MODULE__, to_string(initial)))
+  def start_link(initial, name) do
+    GenStage.start_link(__MODULE__, initial, name: name)
   end
 
   def init(counter), do: {:producer, counter}

@@ -10,11 +10,11 @@ defmodule ParallelGenStage.GuineaPigSupervisor do
   start Producer,
     args: [0], count: 2
   step ProducerConsumer,
-    args: ["A", "B", "C"], count: 3, min_demand: 1, max_demand: 10
+    args: ["Z"], count: 3, min_demand: 1, max_demand: 10
   step ProducerConsumer,
-    args: ["G", "H", "I"], count: 3, min_demand: 1, max_demand: 3
+    args: ["W"], count: 3, min_demand: 1, max_demand: 3
   finish Consumer,
-    args: ["X", "Y"], count: 2, min_demand: 1, max_demand: 5
+    count: 2, min_demand: 1, max_demand: 5
 
   def old_init(_) do
     producer_initials = [0, 1000]
