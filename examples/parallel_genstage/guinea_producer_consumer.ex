@@ -1,5 +1,5 @@
 defmodule ParallelGenStage.GuineaProducerConsumer do
-  use ParallelGenStage.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
+  use ElixirDrip.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
 
   def handle_events(events, _from, suffix) do
     processed_events =

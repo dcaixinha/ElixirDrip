@@ -1,12 +1,10 @@
-defmodule ParallelGenStage.Pipeliner do
+defmodule ElixirDrip.Pipeliner do
   import Supervisor.Spec
 
-  @pipeliner_default_count 4
-  @pipeliner_default_min_demand 44
-  @pipeliner_default_max_demand 88
+  @pipeliner_default_count 1
+  @pipeliner_default_min_demand 1
+  @pipeliner_default_max_demand 10
 
-  # DONE: default opts like name, min_demand and max_demand
-  # for each ProdConsumer|Consumer passed through __using__ options
   defmacro __using__(opts) do
     name = get_or_default(opts, :name, random_name(:pipeliner))
     default_count = get_or_default(opts, :count, @pipeliner_default_count)

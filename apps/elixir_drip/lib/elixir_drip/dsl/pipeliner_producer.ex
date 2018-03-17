@@ -1,5 +1,5 @@
-defmodule ParallelGenStage.Pipeliner.Producer do
-  import ParallelGenStage.Pipeliner
+defmodule ElixirDrip.Pipeliner.Producer do
+  import ElixirDrip.Pipeliner
 
   defmacro __using__(opts) do
     args = get_or_default(opts, :args, [])

@@ -1,5 +1,5 @@
 defmodule ParallelGenStage.GuineaSupervisor do
-  alias ParallelGenStage.Pipeliner
+  alias ElixirDrip.Pipeliner
   alias ParallelGenStage.GuineaProducer, as: Producer
   alias ParallelGenStage.GuineaProducerConsumer, as: ProducerConsumer
   alias ParallelGenStage.GuineaConsumer, as: Consumer

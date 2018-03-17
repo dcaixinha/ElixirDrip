@@ -1,5 +1,5 @@
-defmodule ParallelGenStage.Pipeliner.Consumer do
-  import ParallelGenStage.Pipeliner
+defmodule ElixirDrip.Pipeliner.Consumer do
+  import ElixirDrip.Pipeliner
 
   defmacro __using__(opts) do
     type = get_or_default(opts, :type)
