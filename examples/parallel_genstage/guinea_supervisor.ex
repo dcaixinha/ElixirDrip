@@ -1,11 +1,11 @@
-defmodule ParallelGenStage.GuineaPigSupervisor do
+defmodule ParallelGenStage.GuineaSupervisor do
   alias ParallelGenStage.Pipeliner
   alias ParallelGenStage.GuineaProducer, as: Producer
   alias ParallelGenStage.GuineaProducerConsumer, as: ProducerConsumer
   alias ParallelGenStage.GuineaConsumer, as: Consumer
 
   use Pipeliner,
-    name: :zaza, min_demand: 4, max_demand: 8
+    name: :guinea_pipeline, min_demand: 4, max_demand: 8
 
   start Producer,
     args: [0], count: 2
