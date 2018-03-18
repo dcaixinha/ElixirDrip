@@ -8,6 +8,8 @@ defmodule ElixirDrip.Pipeliner.Consumer do
     end
 
     args = get_or_default(opts, :args, [])
+    prepare_function = get_or_default(opts, :prepare_state)
+
     optional_args = create_args(__MODULE__, args)
     required_args = create_args(__MODULE__, [:name, :sub_options])
 
@@ -15,13 +17,9 @@ defmodule ElixirDrip.Pipeliner.Consumer do
 
     function_args = optional_args ++ required_args
 
-    optional_args = case length(optional_args) == 1 do
-      true -> Enum.at(optional_args, 0)
-      _    -> optional_args
-    end
-
     quote do
       use GenStage
+      import unquote(__MODULE__)
 
       def start_link(unquote_splicing(function_args)) do
         GenStage.start_link(
@@ -29,9 +27,19 @@ defmodule ElixirDrip.Pipeliner.Consumer do
       end
 
       def init([unquote_splicing(optional_and_subscription_args)]) do
-        {unquote(type), unquote(optional_args), subscribe_to: sub_options}
+        state = prepare_args(__MODULE__, unquote(prepare_function), unquote(optional_args))
+
+        {unquote(type), state, subscribe_to: sub_options}
       end
     end
+  end
+
+  def prepare_args(_module, nil, args), do: args
+  def prepare_args(module, function, args) do
+    # apply always receives an argument list
+    args = List.flatten([args])
+
+    apply(module, function, args)
   end
 
   defp create_args(_, []), do: []

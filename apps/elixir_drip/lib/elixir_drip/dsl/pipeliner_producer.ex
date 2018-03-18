@@ -10,29 +10,30 @@ defmodule ElixirDrip.Pipeliner.Producer do
 
     function_args = optional_args ++ required_args
 
-    optional_args = case length(optional_args) == 1 do
-      true -> Enum.at(optional_args, 0)
-      _    -> optional_args
-    end
-
     quote do
       use GenStage
+      import unquote(__MODULE__)
 
       def start_link(unquote_splicing(function_args)) do
         GenStage.start_link(__MODULE__, unquote(optional_args), name: name)
       end
 
-      def init(args) do
-        args = prepare_args(unquote(prepare_function), args)
+      def init([unquote_splicing(optional_args)]) do
+        args = prepare_args(__MODULE__, unquote(prepare_function), unquote(optional_args))
 
         {:producer, args}
       end
 
-      defp prepare_args(nil, args), do: args
-      defp prepare_args(function, args) do
-        apply(__MODULE__, function, [args])
-      end
     end
+  end
+
+  def prepare_args(_module, nil, [args]), do: args
+  def prepare_args(_module, nil, args), do: args
+  def prepare_args(module, function, args) do
+    # apply always receives an argument list
+    args = List.flatten([args])
+
+    apply(module, function, args)
   end
 
   defp create_args(_, []), do: []
