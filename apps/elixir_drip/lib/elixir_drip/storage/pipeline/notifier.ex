@@ -1,18 +1,26 @@
 defmodule ElixirDrip.Storage.Pipeline.Notifier do
   @moduledoc false
 
-  use     GenStage
+  # use     GenStage
   require Logger
 
   @dummy_state []
 
-  def start_link(name, subscription_options), do:
-    GenStage.start_link(__MODULE__, subscription_options, name: name)
+  # def start_link(name, subscription_options), do:
+  #   GenStage.start_link(__MODULE__, subscription_options, name: name)
 
-  def init(subscription_options) do
-    Logger.debug("#{inspect(self())}: Pipeline Notifier started. Options: #{inspect(subscription_options)}")
+  # def init(subscription_options) do
+  #   Logger.debug("#{inspect(self())}: Pipeline Notifier started. Options: #{inspect(subscription_options)}")
 
-    {:consumer, @dummy_state, subscription_options}
+  #   {:consumer, @dummy_state, subscription_options}
+  # end
+
+  use ElixirDrip.Pipeliner.Consumer, type: :consumer, prepare_state: :prepare
+
+  def prepare() do
+    Logger.debug("#{inspect(self())}: Streamlined Pipeline Notifier started.")
+
+    @dummy_state
   end
 
   def handle_events(tasks, _from, _state) do

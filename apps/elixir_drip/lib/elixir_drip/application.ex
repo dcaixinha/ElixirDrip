@@ -13,8 +13,10 @@ defmodule ElixirDrip.Application do
     Supervisors.CacheSupervisor,
     Workers.QueueWorker
   }
-  alias ElixirDrip.Storage.Supervisors.Download.Pipeline, as: DownloadPipeline
-  alias ElixirDrip.Storage.Supervisors.Upload.Pipeline, as: UploadPipeline
+  # alias ElixirDrip.Storage.Supervisors.Download.Pipeline, as: DownloadPipeline
+  # alias ElixirDrip.Storage.Supervisors.Upload.Pipeline, as: UploadPipeline
+  alias ElixirDrip.Storage.Supervisors.Download.StreamlinedPipeline, as: DownloadPipeline
+  alias ElixirDrip.Storage.Supervisors.Upload.StreamlinedPipeline, as: UploadPipeline
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false

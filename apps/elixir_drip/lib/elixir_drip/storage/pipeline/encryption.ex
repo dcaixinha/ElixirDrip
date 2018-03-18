@@ -2,18 +2,26 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   @moduledoc false
   @dummy_state []
 
-  use     GenStage
+  # use     GenStage
   require Logger
   alias   ElixirDrip.Storage.Providers.Encryption.Simple, as: Provider
   alias   ElixirDrip.Storage.Supervisors.CacheSupervisor, as: Cache
 
-  def start_link(name, subscription_options),
-    do: GenStage.start_link(__MODULE__, subscription_options, name: name)
+  # def start_link(name, subscription_options),
+  #   do: GenStage.start_link(__MODULE__, subscription_options, name: name)
 
-  def init(subscription_options) do
-    Logger.debug("#{inspect(self())}: Pipeline Encryption started. Options: #{inspect(subscription_options)}")
+  # def init(subscription_options) do
+  #   Logger.debug("#{inspect(self())}: Pipeline Encryption started. Options: #{inspect(subscription_options)}")
 
-    {:producer_consumer, @dummy_state, subscription_options}
+  #   {:producer_consumer, @dummy_state, subscription_options}
+  # end
+
+  use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer, prepare_state: :prepare
+
+  def prepare() do
+    Logger.debug("#{inspect(self())}: Streamlined Pipeline Encryption started.")
+
+    @dummy_state
   end
 
   def handle_events(tasks, _from, _state) do

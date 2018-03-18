@@ -16,6 +16,8 @@ defmodule ElixirDrip.Utils do
     |> log_time()
   end
 
+  def run_and_measure(function), do: :timer.tc(function)
+
   def log_time(time) do
     Logger.debug("Took: #{time} secs")
   end
@@ -36,6 +38,13 @@ defmodule ElixirDrip.Utils do
       end
     end
   end
+
+  def ast_without_metadata({op, _metadata, value}) when is_tuple(value), do: {op, ast_without_metadata(value)}
+  def ast_without_metadata({op, _metadata, list}) when is_list(list), do: {op, ast_without_metadata(list)}
+  def ast_without_metadata([value|rest]), do: [ast_without_metadata(value)] ++ ast_without_metadata(rest)
+  def ast_without_metadata([]), do: []
+  def ast_without_metadata({op, _metadata, value}), do: {op, value}
+  def ast_without_metadata(ast), do: ast
 
   def spawn_ticker(), do: spawn(__MODULE__.Ticker, :loop, [])
 
