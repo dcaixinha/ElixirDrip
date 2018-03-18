@@ -23,12 +23,18 @@ defmodule ElixirDrip.Storage.Supervisors.Download.Pipeline do
   end
 
   def init(_) do
-    remote_storage_subscription = [subscribe_to: [{@starter_name, min_demand: 1, max_demand: 10}]]
-    encryption_subscription = [subscribe_to: [{@storage_name, min_demand: 1, max_demand: 10}]]
-    notifier_subscription = [subscribe_to: [{@encryption_name, min_demand: 1, max_demand: 10}]]
+    # remote_storage_subscription = subscribe_to: [{@starter_name, min_demand: 1, max_demand: 10}]
+    remote_storage_subscription = [{@starter_name, min_demand: 1, max_demand: 10}]
+
+    # encryption_subscription = [subscribe_to: [{@storage_name, min_demand: 1, max_demand: 10}]]
+    encryption_subscription = [{@storage_name, min_demand: 1, max_demand: 10}]
+
+    # notifier_subscription = [subscribe_to: [{@encryption_name, min_demand: 1, max_demand: 10}]]
+    notifier_subscription = [{@encryption_name, min_demand: 1, max_demand: 10}]
 
     Supervisor.init([
-      worker(Starter, [@starter_name, @direction], restart: :permanent),
+      worker(Starter, [@direction, @starter_name],
+             restart: :permanent),
 
       worker(RemoteStorage, [@storage_name, remote_storage_subscription],
              restart: :permanent),
