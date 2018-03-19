@@ -1,12 +1,17 @@
 defmodule MeasuredModule do
-  import ElixirDrip.Chronometer
+  use ElixirDrip.Chronometer, unit: :secs
 
-  defchrono_v5 slow_square(x \\ 3) do
+  defchrono slow_times(x, y) do
+    Process.sleep(2000)
+    x * y
+  end
+
+  defchrono slow_square(x \\ 3) do
     Process.sleep(2000)
     x * x
   end
 
-  [a: %{x: 1}, b: %{y: 9}] |> defkv()
+  # [a: %{x: 1}, b: %{y: 9}] |> defkv()
 
   # defchrono_v3 slow_times(x, y) do
   #   Process.sleep(2000)

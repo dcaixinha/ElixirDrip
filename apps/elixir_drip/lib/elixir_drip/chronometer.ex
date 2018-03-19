@@ -1,6 +1,38 @@
 defmodule ElixirDrip.Chronometer do
   @moduledoc false
-  alias ElixirDrip.Chronometer
+
+  defmacro __using__(options) do
+    IO.puts "inside __using__"
+    IO.inspect options
+
+    time_unit = options[:unit]
+
+    quote do
+      import unquote(__MODULE__)
+
+      Module.register_attribute(__MODULE__, :time_unit, [])
+      @time_unit unquote(time_unit)
+    end
+  end
+
+  defmacro defchrono(function_definition, do: body) do
+    {function, args} = Macro.decompose_call(function_definition)
+    arity = length(args)
+
+    quote bind_quoted: [
+      function_definition: Macro.escape(function_definition),
+      body: Macro.escape(body),
+      function: function,
+      arity: arity
+    ] do
+      def unquote(function_definition) do
+        signature =
+          pretty_signature(__MODULE__, unquote(function), unquote(arity))
+
+        run_and_measure(@time_unit, signature, fn -> unquote(body) end)
+      end
+    end
+  end
 
   defmacro defchrono_v0(function_definition, do: body) do
     IO.puts "On defchrono_v0, function definition:"
@@ -150,7 +182,7 @@ defmodule ElixirDrip.Chronometer do
     IO.inspect args
 
     ast_to_return = quote bind_quoted: [
-      function_definition: function_definition,
+      function_definition: Macro.escape(function_definition),
       body: Macro.escape(body),
       function: function,
       arity: arity
@@ -171,39 +203,6 @@ defmodule ElixirDrip.Chronometer do
     ast_to_return
   end
 
-  defmacro defmine(function_def, do: body) do
-    IO.puts "Defmine result"
-    IO.inspect function_def
-    IO.inspect body
-
-    # DON'T WORK
-    result = quote bind_quoted: [function_def: Macro.escape(function_def),
-                        body: Macro.escape(body)] do
-    # WORKS
-    # result = quote bind_quoted: [function_def: Macro.escape(function_def),
-    #                     body: Macro.escape(body)] do
-    # WORKS but needs unquote everywhere as previous example
-    # result = quote do
-      def unquote(function_def), do: unquote(body)
-      # def unquote(function_def), do: unquote(body)
-      # def unquote(function_def) do
-      #   IO.inspect unquote(body)
-      #   "hey"
-      # end
-    end
-    IO.puts "defmine result quote/unquoted/bind_quoted:"
-    IO.puts Macro.to_string result
-    result
-  end
-
-  defmacro defkv(kv) do
-    quote bind_quoted: [kv: kv] do
-      Enum.each kv, fn {k, v} ->
-        def unquote(k)(), do: unquote(Macro.escape(v))
-      end
-    end
-  end
-
   def run_and_measure(to_measure) do
     {time_µs, result} = :timer.tc(to_measure)
     IO.puts "Run in #{time_µs} µs"
@@ -217,6 +216,22 @@ defmodule ElixirDrip.Chronometer do
 
     result
   end
+
+  def run_and_measure(time_unit, to_run, to_measure) do
+    {time_µs, result} = :timer.tc(to_measure)
+
+    {units, measured_time} = convert_time(time_unit, time_µs)
+    IO.puts "Took #{measured_time} #{units} to run #{to_run}"
+
+    result
+  end
+
+  defp convert_time(:hrs, time), do: {"hrs", time/(1_000_000*60*60)}
+  defp convert_time(:mins, time), do: {"mins", time/(1_000_000*60)}
+  defp convert_time(:secs, time), do: {"secs", time/1_000_000}
+  defp convert_time(:millisecs, time), do: {"ms", time/1000}
+  defp convert_time(:microsecs, time), do: {"µs", time}
+  defp convert_time(_, time), do: {"µs", time}
 
   def pretty_signature(module, function, args) when is_list(args) do
     module = module
