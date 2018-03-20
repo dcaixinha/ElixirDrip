@@ -36,10 +36,8 @@ defmodule ElixirDrip.Pipeliner.Consumer do
 
   def prepare_args(_module, nil, args), do: args
   def prepare_args(module, function, args) do
-    # apply always receives an argument list
-    args = List.flatten([args])
-
-    apply(module, function, args)
+    # apply always receives an argument list,
+    apply(module, function, [args])
   end
 
   defp create_args(_, []), do: []

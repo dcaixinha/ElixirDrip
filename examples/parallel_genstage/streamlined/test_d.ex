@@ -22,7 +22,7 @@ end
 defmodule ParallelGenStage.ProdD do
   use ElixirDrip.Pipeliner.Producer, args: [:initial, :dont_care], prepare_state: :prepare
 
-  def prepare(i, d) do
+  def prepare([i, d]) do
     IO.puts "ProdD: Preparing #{i} and #{d}"
 
     i
@@ -38,7 +38,7 @@ end
 defmodule ParallelGenStage.ProdConsD do
   use ElixirDrip.Pipeliner.Consumer, args: [:suffix, :not_needed], type: :producer_consumer, prepare_state: :prepare
 
-  def prepare(s, n) do
+  def prepare([s, n]) do
     IO.puts "ProdConsD: Preparing #{s} and #{n}"
 
     s
@@ -56,7 +56,7 @@ end
 defmodule ParallelGenStage.ConsD do
   use ElixirDrip.Pipeliner.Consumer, args: [:foo, :bar], type: :consumer, prepare_state: :prepare
 
-  def prepare(foo, bar) do
+  def prepare([foo, bar]) do
     IO.puts "ConsD: Preparing #{foo} and #{bar}"
 
     [foo, bar]

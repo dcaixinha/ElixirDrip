@@ -17,7 +17,7 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
 
   use ElixirDrip.Pipeliner.Consumer, type: :consumer, prepare_state: :prepare
 
-  def prepare() do
+  def prepare([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline Notifier started.")
 
     @dummy_state

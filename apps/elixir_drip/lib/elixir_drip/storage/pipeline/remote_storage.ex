@@ -20,7 +20,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
   use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer, prepare_state: :prepare
 
-  def prepare() do
+  def prepare([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline RemoteStorage started.")
 
     @dummy_state

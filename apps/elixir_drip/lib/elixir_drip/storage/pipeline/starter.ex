@@ -23,7 +23,7 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
 
   use ElixirDrip.Pipeliner.Producer, args: [:type], prepare_state: :prepare
 
-  def prepare(type) do
+  def prepare([type]) do
     Logger.debug("#{inspect(self())}: #{type} Pipeline Starter started.")
 
     %{queue: QueueWorker.queue_name(type), type: type, pending: 0}

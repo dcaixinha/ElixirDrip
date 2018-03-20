@@ -22,28 +22,28 @@ end
 defmodule ParallelGenStage.ProdA do
   use ElixirDrip.Pipeliner.Producer, args: [:initial]
 
-  def handle_demand(demand, counter) do
+  def handle_demand(demand, [counter]) do
     events = Enum.to_list(counter..(counter + demand - 1))
-    {:noreply, events, counter + demand}
+    {:noreply, events, [counter + demand]}
   end
 end
 
 defmodule ParallelGenStage.ProdConsA do
   use ElixirDrip.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
 
-  def handle_events(events, _from, suffix) do
+  def handle_events(events, _from, [suffix]) do
     processed_events =
       events
       |> Enum.map(fn e -> "#{e}_#{suffix}" end)
 
-    {:noreply, processed_events, suffix}
+    {:noreply, processed_events, [suffix]}
   end
 end
 
 defmodule ParallelGenStage.ConsA do
   use ElixirDrip.Pipeliner.Consumer, args: [:foo], type: :consumer
 
-  def handle_events(events, _from, foo) do
+  def handle_events(events, _from, [foo]) do
     for event <- events do
       Process.sleep(1000)
 
@@ -51,6 +51,6 @@ defmodule ParallelGenStage.ConsA do
     end
 
     # As a consumer we never emit events
-    {:noreply, [], foo}
+    {:noreply, [], [foo]}
   end
 end

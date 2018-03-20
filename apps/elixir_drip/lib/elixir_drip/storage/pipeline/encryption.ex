@@ -18,7 +18,7 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
 
   use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer, prepare_state: :prepare
 
-  def prepare() do
+  def prepare([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline Encryption started.")
 
     @dummy_state
