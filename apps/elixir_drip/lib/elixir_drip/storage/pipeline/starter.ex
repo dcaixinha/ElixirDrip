@@ -21,18 +21,21 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
   #   }
   # end
 
-  use ElixirDrip.Pipeliner.Producer, args: [:type], prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Producer, args: [:type]
 
-  def prepare([type]) do
+  @impl ElixirDrip.Pipeliner.Producer
+  def prepare_state([type]) do
     Logger.debug("#{inspect(self())}: #{type} Pipeline Starter started.")
 
     %{queue: QueueWorker.queue_name(type), type: type, pending: 0}
   end
 
+  @impl true
   def handle_info(:try_again, %{queue: queue, pending: demand} = state) do
     send_events_from_queue(queue, demand, state)
   end
 
+  @impl true
   def handle_demand(demand, %{queue: queue, pending: pending} = state) when demand > 0 do
     Logger.debug("#{inspect(self())}: Starter(#{inspect(queue)}) received demand of #{demand}, pending = #{pending}.")
     total_demand = demand + pending

@@ -22,6 +22,7 @@ end
 defmodule ParallelGenStage.ProdB do
   use ElixirDrip.Pipeliner.Producer, args: [:initial, :dont_care]
 
+  @impl true
   def handle_demand(demand, [counter, dont_care]) do
     events = Enum.to_list(counter..(counter + demand - 1))
 
@@ -32,6 +33,7 @@ end
 defmodule ParallelGenStage.ProdConsB do
   use ElixirDrip.Pipeliner.Consumer, args: [:suffix, :not_needed], type: :producer_consumer
 
+  @impl true
   def handle_events(events, _from, [suffix, not_needed]) do
     processed_events =
       events
@@ -44,6 +46,7 @@ end
 defmodule ParallelGenStage.ConsB do
   use ElixirDrip.Pipeliner.Consumer, args: [:foo, :bar], type: :consumer
 
+  @impl true
   def handle_events(events, _from, [foo, bar]) do
     for event <- events do
       Process.sleep(1000)

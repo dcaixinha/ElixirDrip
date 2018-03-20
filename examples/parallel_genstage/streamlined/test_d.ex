@@ -20,14 +20,16 @@ end
 
 
 defmodule ParallelGenStage.ProdD do
-  use ElixirDrip.Pipeliner.Producer, args: [:initial, :dont_care], prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Producer, args: [:initial, :dont_care]
 
-  def prepare([i, d]) do
+  @impl ElixirDrip.Pipeliner.Producer
+  def prepare_state([i, d]) do
     IO.puts "ProdD: Preparing #{i} and #{d}"
 
     i
   end
 
+  @impl true
   def handle_demand(demand, counter) do
     events = Enum.to_list(counter..(counter + demand - 1))
 
@@ -36,14 +38,16 @@ defmodule ParallelGenStage.ProdD do
 end
 
 defmodule ParallelGenStage.ProdConsD do
-  use ElixirDrip.Pipeliner.Consumer, args: [:suffix, :not_needed], type: :producer_consumer, prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Consumer, args: [:suffix, :not_needed], type: :producer_consumer
 
-  def prepare([s, n]) do
+  @impl ElixirDrip.Pipeliner.Consumer
+  def prepare_state([s, n]) do
     IO.puts "ProdConsD: Preparing #{s} and #{n}"
 
     s
   end
 
+  @impl true
   def handle_events(events, _from, suffix) do
     processed_events =
       events
@@ -54,14 +58,16 @@ defmodule ParallelGenStage.ProdConsD do
 end
 
 defmodule ParallelGenStage.ConsD do
-  use ElixirDrip.Pipeliner.Consumer, args: [:foo, :bar], type: :consumer, prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Consumer, args: [:foo, :bar], type: :consumer
 
-  def prepare([foo, bar]) do
+  @impl ElixirDrip.Pipeliner.Consumer
+  def prepare_state([foo, bar]) do
     IO.puts "ConsD: Preparing #{foo} and #{bar}"
 
     [foo, bar]
   end
 
+  @impl true
   def handle_events(events, _from, [foo, bar]) do
     for event <- events do
       Process.sleep(1000)

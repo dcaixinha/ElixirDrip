@@ -16,14 +16,16 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
   #   {:producer_consumer, @dummy_state, subscription_options}
   # end
 
-  use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer, prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer
 
-  def prepare([]) do
+  @impl ElixirDrip.Pipeliner.Consumer
+  def prepare_state([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline Encryption started.")
 
     @dummy_state
   end
 
+  @impl true
   def handle_events(tasks, _from, _state) do
     encrypted = Enum.map(tasks, &encryption_step(&1))
 

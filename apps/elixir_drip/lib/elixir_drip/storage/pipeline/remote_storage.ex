@@ -18,14 +18,16 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
   #   {:producer_consumer, @dummy_state, subscription_options}
   # end
 
-  use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer, prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Consumer, type: :producer_consumer
 
-  def prepare([]) do
+  @impl ElixirDrip.Pipeliner.Consumer
+  def prepare_state([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline RemoteStorage started.")
 
     @dummy_state
   end
 
+  @impl true
   def handle_events(tasks, _from, _state) do
     processed = Enum.map(tasks, &remote_storage_step(&1))
 

@@ -15,14 +15,16 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
   #   {:consumer, @dummy_state, subscription_options}
   # end
 
-  use ElixirDrip.Pipeliner.Consumer, type: :consumer, prepare_state: :prepare
+  use ElixirDrip.Pipeliner.Consumer, type: :consumer
 
-  def prepare([]) do
+  @impl ElixirDrip.Pipeliner.Consumer
+  def prepare_state([]) do
     Logger.debug("#{inspect(self())}: Streamlined Pipeline Notifier started.")
 
     @dummy_state
   end
 
+  @impl true
   def handle_events(tasks, _from, _state) do
     Enum.each(tasks, &notify_step(&1))
 
