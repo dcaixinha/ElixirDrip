@@ -54,28 +54,28 @@ defmodule ElixirDrip.Pipeliner do
 
   defmacro start(producer, opts \\ []) do
     quote bind_quoted: [producer: producer, opts: opts] do
-      opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
+      options_and_args = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      @pipeline_steps [producer: producer, args: opts[:args], options: opts[:options]]
-      IO.puts "START: #{producer}, #{inspect(opts)}"
+      @pipeline_steps [producer: producer] ++ options_and_args
+      IO.puts "START: #{producer}, #{inspect(options_and_args)}"
     end
   end
 
   defmacro step(producer_consumer, opts \\ []) do
     quote bind_quoted: [producer_consumer: producer_consumer, opts: opts] do
-      opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
+      options_and_args = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      @pipeline_steps [producer_consumer: producer_consumer, args: opts[:args], options: opts[:options]]
-      IO.puts "STEP: #{producer_consumer}, #{inspect(opts)}"
+      @pipeline_steps [producer_consumer: producer_consumer] ++ options_and_args
+      IO.puts "STEP: #{producer_consumer}, #{inspect(options_and_args)}"
     end
   end
 
   defmacro finish(consumer, opts \\ []) do
     quote bind_quoted: [consumer: consumer, opts: opts] do
-      opts = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
+      options_and_args = get_options_and_args(opts, @default_count, @default_min_demand, @default_max_demand)
 
-      @pipeline_steps [consumer: consumer, args: opts[:args], options: opts[:options]]
-      IO.puts "CONSUMER: #{consumer}, #{inspect(opts)}"
+      @pipeline_steps [consumer: consumer] ++ options_and_args
+      IO.puts "CONSUMER: #{consumer}, #{inspect(options_and_args)}"
     end
   end
 
@@ -120,7 +120,7 @@ defmodule ElixirDrip.Pipeliner do
                          args: args, options: options,
                          names_to_subscribe: names_to_subscribe)
 
-  def get_worker_specs_with_subscriptions(consumer,
+  defp get_worker_specs_with_subscriptions(consumer,
                        args: args, options: options,
                        names_to_subscribe: names_to_subscribe) do
 
@@ -142,30 +142,23 @@ defmodule ElixirDrip.Pipeliner do
   end
 
   def get_options_and_args(opts, default_count, default_min_demand, default_max_demand) do
-
     options_and_args = fill_options_and_args(opts, default_count, default_min_demand, default_max_demand)
 
     options = Keyword.drop(options_and_args, [:args])
-
-    options_and_args
-    |> Enum.filter(fn {k,_} -> k == :args end)
-    |> Keyword.put(:options, options)
+    [
+      args: options_and_args[:args],
+      options: options
+    ]
   end
 
   def fill_options_and_args(options, default_count, default_min_demand, default_max_demand) do
-    result = [{:count, default_count},
-              {:min_demand, default_min_demand},
-              {:max_demand, default_max_demand}]
-              |> Enum.reduce([], fn {key, default}, result ->
-                Keyword.put(result, key, get_or_default(options, key, default))
-              end)
-
-    args = case options[:args] do
-      nil  -> []
-      args -> args
-    end
-
-    Keyword.put(result, :args, args)
+    [{:args, []},
+     {:count, default_count},
+     {:min_demand, default_min_demand},
+     {:max_demand, default_max_demand}]
+     |> Enum.reduce([], fn {key, default}, result ->
+       Keyword.put(result, key, get_or_default(options, key, default))
+     end)
   end
 
   def get_or_default(options, _key, default \\ nil)
