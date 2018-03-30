@@ -5,7 +5,7 @@ defmodule ElixirDrip.Ecto.Ksuid do
   To enable ksuid as the primary key type for ecto schemas add this annotation
   on top of the schema definition:
 
-      @primary_key {:id, Motus.Ecto.Ksuid, autogenerate: true}
+      @primary_key {:id, ElixirDrip.Ecto.Ksuid, autogenerate: true}
       schema "my_schema" do
         (...)
       end
@@ -14,7 +14,7 @@ defmodule ElixirDrip.Ecto.Ksuid do
 
       schema "my_schema" do
         (...)
-        field :my_ksuid_field, Motus.Ecto.Ksuid
+        field :my_ksuid_field, ElixirDrip.Ecto.Ksuid
         (...)
       end
 
