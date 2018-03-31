@@ -6,7 +6,7 @@ defmodule ParallelGenStage.TestA do
   alias ParallelGenStage.ConsA
 
   use Pipeliner,
-    name: :guinea_pipeline, min_demand: 4, max_demand: 8
+    name: :guinea_pipeline_a, min_demand: 4, max_demand: 8
 
   start ProdA,
     args: [275], count: 2
@@ -22,7 +22,7 @@ end
 defmodule ParallelGenStage.ProdA do
   use ElixirDrip.Pipeliner.Producer, args: [:initial]
 
-  @impl true
+  @impl GenStage
   def handle_demand(demand, [counter]) do
     events = Enum.to_list(counter..(counter + demand - 1))
     {:noreply, events, [counter + demand]}
@@ -32,7 +32,7 @@ end
 defmodule ParallelGenStage.ProdConsA do
   use ElixirDrip.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
 
-  @impl true
+  @impl GenStage
   def handle_events(events, _from, [suffix]) do
     processed_events =
       events
@@ -45,7 +45,7 @@ end
 defmodule ParallelGenStage.ConsA do
   use ElixirDrip.Pipeliner.Consumer, args: [:foo], type: :consumer
 
-  @impl true
+  @impl GenStage
   def handle_events(events, _from, [foo]) do
     for event <- events do
       Process.sleep(1000)

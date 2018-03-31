@@ -15,12 +15,13 @@ defmodule ElixirDrip.Pipeliner.Producer do
       use GenStage
       import unquote(__MODULE__)
       @behaviour unquote(__MODULE__)
+      @behaviour GenStage
 
       def start_link(unquote_splicing(function_args)) do
         GenStage.start_link(__MODULE__, unquote(optional_args), name: name)
       end
 
-      @impl true
+      @impl GenStage
       def init([unquote_splicing(optional_args)]) do
         args = prepare_state(unquote(optional_args))
 

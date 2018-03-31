@@ -5,7 +5,7 @@ defmodule ParallelGenStage.StreamlinedSupervisor do
   alias ParallelGenStage.StreamlinedConsumer, as: Consumer
 
   use Pipeliner,
-    name: :guinea_pipeline, min_demand: 4, max_demand: 8
+    name: :guinea_pipeline_supervised, min_demand: 4, max_demand: 8
 
   start Producer,
     args: [275], count: 2

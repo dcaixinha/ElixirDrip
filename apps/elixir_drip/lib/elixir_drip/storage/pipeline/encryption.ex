@@ -25,7 +25,7 @@ defmodule ElixirDrip.Storage.Pipeline.Encryption do
     @dummy_state
   end
 
-  @impl true
+  @impl GenStage
   def handle_events(tasks, _from, _state) do
     encrypted = Enum.map(tasks, &encryption_step(&1))
 

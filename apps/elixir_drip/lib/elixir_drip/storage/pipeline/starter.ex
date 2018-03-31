@@ -30,12 +30,12 @@ defmodule ElixirDrip.Storage.Pipeline.Starter do
     %{queue: QueueWorker.queue_name(type), type: type, pending: 0}
   end
 
-  @impl true
+  @impl GenStage
   def handle_info(:try_again, %{queue: queue, pending: demand} = state) do
     send_events_from_queue(queue, demand, state)
   end
 
-  @impl true
+  @impl GenStage
   def handle_demand(demand, %{queue: queue, pending: pending} = state) when demand > 0 do
     Logger.debug("#{inspect(self())}: Starter(#{inspect(queue)}) received demand of #{demand}, pending = #{pending}.")
     total_demand = demand + pending

@@ -6,7 +6,7 @@ defmodule ParallelGenStage.TestD do
   alias ParallelGenStage.ConsD
 
   use Pipeliner,
-    name: :guinea_pipeline, min_demand: 4, max_demand: 8
+    name: :guinea_pipeline_d, min_demand: 4, max_demand: 8
 
   start ProdD,
     args: [275, "hi there"], count: 2
@@ -29,7 +29,7 @@ defmodule ParallelGenStage.ProdD do
     i
   end
 
-  @impl true
+  @impl GenStage
   def handle_demand(demand, counter) do
     events = Enum.to_list(counter..(counter + demand - 1))
 
@@ -47,7 +47,7 @@ defmodule ParallelGenStage.ProdConsD do
     s
   end
 
-  @impl true
+  @impl GenStage
   def handle_events(events, _from, suffix) do
     processed_events =
       events
@@ -67,7 +67,7 @@ defmodule ParallelGenStage.ConsD do
     [foo, bar]
   end
 
-  @impl true
+  @impl GenStage
   def handle_events(events, _from, [foo, bar]) do
     for event <- events do
       Process.sleep(1000)

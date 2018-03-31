@@ -24,7 +24,7 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
     @dummy_state
   end
 
-  @impl true
+  @impl GenStage
   def handle_events(tasks, _from, _state) do
     Enum.each(tasks, &notify_step(&1))
 

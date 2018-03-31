@@ -27,7 +27,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
     @dummy_state
   end
 
-  @impl true
+  @impl GenStage
   def handle_events(tasks, _from, _state) do
     processed = Enum.map(tasks, &remote_storage_step(&1))
 

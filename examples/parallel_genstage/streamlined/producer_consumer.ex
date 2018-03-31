@@ -1,7 +1,7 @@
 defmodule ParallelGenStage.StreamlinedProducerConsumer do
   use ElixirDrip.Pipeliner.Consumer, args: [:suffix], type: :producer_consumer
 
-  @impl true
+  @impl GenStage
   def handle_events(events, _from, suffix) do
     processed_events =
       events
