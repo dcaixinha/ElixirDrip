@@ -1,25 +1,11 @@
 defmodule ElixirDrip.Storage.Pipeline.Starter do
   @moduledoc false
 
-  # use     GenStage
   require Logger
   alias   ElixirDrip.Storage.Workers.QueueWorker
 
   # @queue_polling 5000
   @queue_polling 30 * 1000
-
-  # def start_link(name, type) do
-  #   GenStage.start_link(__MODULE__, type, name: name)
-  # end
-
-  # def init(type) do
-  #   Logger.debug("#{inspect(self())}: #{type} Pipeline Starter started.")
-
-  #   {
-  #     :producer,
-  #     %{queue: QueueWorker.queue_name(type), type: type, pending: 0}
-  #   }
-  # end
 
   use ElixirDrip.Pipeliner.Producer, args: [:type]
 
