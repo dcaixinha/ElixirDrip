@@ -1,5 +1,4 @@
 defmodule ElixirDrip.Accounts.User do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -13,7 +12,6 @@ defmodule ElixirDrip.Accounts.User do
 
     timestamps()
   end
-
 
   @doc false
   def create_changeset(%User{} = user, attrs) do
