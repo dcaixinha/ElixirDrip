@@ -1,4 +1,4 @@
-u = %{username: "andre", password: "qwerasdf"}
+u = %{username: "ana", password: "qwerasdf", email: "ana@right.there"}
 {:ok, user} = ElixirDrip.Accounts.create_user(u)
 
 alias ElixirDrip.Repo
