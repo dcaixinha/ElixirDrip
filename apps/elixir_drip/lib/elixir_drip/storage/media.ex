@@ -48,10 +48,10 @@ defmodule ElixirDrip.Storage.Media do
 
   defp cast_attrs do
     [
-      :id, :file_name, :full_path, :metadata,
+      :id, :user_id, :file_name, :full_path, :metadata,
       :encryption_key, :storage_key, :uploaded_at
     ]
   end
 
-  defp required_attrs, do: [:id, :file_name, :full_path, :storage_key]
+  defp required_attrs, do: [:id, :user_id, :file_name, :full_path, :storage_key]
 end
