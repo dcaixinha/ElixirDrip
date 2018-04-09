@@ -16,6 +16,8 @@ defmodule ElixirDrip.Storage do
     triggers an Upload request handled by the Upload Pipeline.
   """
   def store(user_id, file_name, full_path, content) do
+    # TODO: Don't allow a '/' on the file_name,
+    # use custom ecto validation
     with %Owner{} = owner <- get_owner(user_id),
          %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path),
          %Changeset{} = changeset <- Changeset.put_assoc(changeset, :owners, [owner]),
@@ -74,8 +76,9 @@ defmodule ElixirDrip.Storage do
 
   def delete(user_id, media_id) do
     with {:ok, :owner} <- is_owner?(user_id, media_id) do
-    # TODO 1: delete all media_owner entries for media
-    # TODO 2: delete media
+      # Given we have the foreign key with
+      # on_delete: :delete_all option
+      Repo.delete(media_id)
     else
       error -> error
     end
