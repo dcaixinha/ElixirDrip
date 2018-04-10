@@ -1,6 +1,7 @@
 defmodule ElixirDrip.Storage do
   @moduledoc false
 
+  import ElixirDrip.Storage.Macros
   import Ecto.Query
   alias Ecto.Changeset
   alias ElixirDrip.Repo
@@ -49,7 +50,7 @@ defmodule ElixirDrip.Storage do
   def retrieve(user_id, media_id) do
     user_media = user_media_query(user_id)
 
-    media_query = from [mo, m] in user_media,
+    media_query = from [_mo, m] in user_media,
       where: m.id == ^media_id,
       select: m
 
@@ -59,8 +60,31 @@ defmodule ElixirDrip.Storage do
     end
   end
 
+  def get_all_media(user_id) do
+    # we can only do one `select` per query,
+    # that's why we don't do any `select` on the
+    # user_media_query
+    user_media = user_media_query(user_id)
+    media_query = from [_mo, m] in user_media,
+      select: m
+
+    Repo.all(media_query)
+  end
+
   def media_by_folder(user_id, folder_path) do
-    # TODO
+    folder_path_size = String.length(folder_path)
+    folder_path_size = -folder_path_size
+    user_media = user_media_query(user_id)
+
+    from [_mo, m] in user_media,
+      where: like(m.full_path, ^"#{folder_path}%"),
+      select: %{
+        id: m.id,
+        full_path: m.full_path,
+        file_name: m.file_name,
+        show_as_folder: remaining_path_size(^folder_path_size, m.full_path)
+      }
+      # select: [m.id, fragment("length(right(?, ?))", m.full_path, ^folder_path_size)]
   end
 
   def share(user_id, media_id, allowed_user_id) do
