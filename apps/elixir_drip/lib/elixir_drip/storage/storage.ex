@@ -64,6 +64,7 @@ defmodule ElixirDrip.Storage do
     # we can only do one `select` per query,
     # that's why we don't do any `select` on the
     # user_media_query
+    # The alternative would be to use subqueries
     user_media = user_media_query(user_id)
     media_query = from [_mo, m] in user_media,
       select: m
@@ -72,19 +73,73 @@ defmodule ElixirDrip.Storage do
   end
 
   def media_by_folder(user_id, folder_path) do
+    user_media_on_folder = user_media_on_folder(user_id, folder_path)
+    folder_media = from e in subquery(user_media_on_folder),
+      select: %{
+        id: e.id,
+        file_name: e.file_name,
+        full_path: e.full_path,
+        remaining_path: e.remaining_path,
+        is_folder: is_folder(e.remaining_path)
+      }
+
+    result = folder_media
+    |> Repo.all()
+    |> Enum.reduce(%{files: [], folders: %{}},
+                   fn(entry, result) ->
+                     case entry[:is_folder] do
+                       true ->
+                         folder_result = update_folder_result(result, entry)
+                         Map.put(result, :folders, folder_result)
+                       false ->
+                         files_result = update_files_result(result, entry)
+                         Map.put(result, :files, files_result)
+                     end
+                   end)
+
+    folder_entry = result[:folders]
+    Map.put(result, :folders, Map.values(folder_entry))
+  end
+
+  defp update_files_result(%{files: files_result}, entry) do
+    new_entry = Map.take(entry, [:file_name, :full_path, :id])
+
+    [new_entry | files_result]
+    |> Enum.reverse()
+  end
+
+  defp update_folder_result(%{folder: folder_result}, entry) do
+    folder_name = extract_folder_name(entry)
+
+    updated_folder_entry = case Map.has_key?(folder_result, folder_name) do
+      true -> increment_folder_files(folder_result[folder_name])
+      false -> %{folder_name: folder_name, files: 1}
+    end
+
+    Map.put(folder_result, folder_name, updated_folder_entry)
+  end
+
+  defp extract_folder_name(%{remaining_path: path}),
+    do: Path.split(path) |> Enum.at(1)
+
+  defp increment_folder_files(%{files: files} = folder_entry),
+    do: %{folder_entry | files: files + 1}
+
+  defp user_media_on_folder(user_id, folder_path) do
     folder_path_size = String.length(folder_path)
     folder_path_size = -folder_path_size
     user_media = user_media_query(user_id)
 
+    # Example without macro, that works
+    # select: [m.id, fragment("length(right(?, ?))", m.full_path, ^folder_path_size)]
     from [_mo, m] in user_media,
       where: like(m.full_path, ^"#{folder_path}%"),
       select: %{
         id: m.id,
         full_path: m.full_path,
         file_name: m.file_name,
-        show_as_folder: remaining_path_size(^folder_path_size, m.full_path)
+        remaining_path: remaining_path(^folder_path_size, m.full_path)
       }
-      # select: [m.id, fragment("length(right(?, ?))", m.full_path, ^folder_path_size)]
   end
 
   def share(user_id, media_id, allowed_user_id) do
@@ -108,7 +163,7 @@ defmodule ElixirDrip.Storage do
     end
   end
 
-  def is_owner?(user_id, media_id) do
+  defp is_owner?(user_id, media_id) do
     (from m in Media,
       where: m.id == ^media_id,
       where: m.user_id == ^user_id)

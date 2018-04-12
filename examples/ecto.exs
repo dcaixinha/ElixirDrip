@@ -42,4 +42,4 @@ path = "$/first/folder"
 Repo.query("select RIGHT('#{path}', -#{String.length(pwd)})")
 Repo.query("select LENGTH(RIGHT('#{path}', -#{String.length(pwd)}))")
 
-Storage.media_by_folder(jose_owner.id, "$/first/folder")
+Storage.media_by_folder(jose_owner.id, pwd)
