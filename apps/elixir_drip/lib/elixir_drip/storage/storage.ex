@@ -17,10 +17,11 @@ defmodule ElixirDrip.Storage do
     triggers an Upload request handled by the Upload Pipeline.
   """
   def store(user_id, file_name, full_path, content) do
+    file_size = byte_size(content)
     # TODO: Don't allow a '/' on the file_name,
     # use custom ecto validation
     with %Owner{} = owner <- get_owner(user_id),
-         %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path),
+         %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path, file_size),
          %Changeset{} = changeset <- Changeset.put_assoc(changeset, :owners, [owner]),
          %Media{storage_key: _key} = media <- Repo.insert!(changeset)
     do
@@ -79,6 +80,7 @@ defmodule ElixirDrip.Storage do
         id: e.id,
         file_name: e.file_name,
         full_path: e.full_path,
+        file_size: e.file_size,
         remaining_path: e.remaining_path,
         is_folder: is_folder(e.remaining_path)
       }
@@ -102,18 +104,18 @@ defmodule ElixirDrip.Storage do
   end
 
   defp update_files_result(%{files: files_result}, entry) do
-    new_entry = Map.take(entry, [:file_name, :full_path, :id])
+    new_entry = Map.take(entry, [:id, :file_name, :full_path, :file_size])
 
     [new_entry | files_result]
     |> Enum.reverse()
   end
 
-  defp update_folder_result(%{folder: folder_result}, entry) do
+  defp update_folder_result(%{folders: folder_result}, %{file_size: file_size} = entry) do
     folder_name = extract_folder_name(entry)
 
     updated_folder_entry = case Map.has_key?(folder_result, folder_name) do
-      true -> increment_folder_files(folder_result[folder_name])
-      false -> %{folder_name: folder_name, files: 1}
+      true -> increment_folder_files_and_size(folder_result[folder_name], file_size)
+      false -> %{folder_name: folder_name, files: 1, size: file_size}
     end
 
     Map.put(folder_result, folder_name, updated_folder_entry)
@@ -122,8 +124,8 @@ defmodule ElixirDrip.Storage do
   defp extract_folder_name(%{remaining_path: path}),
     do: Path.split(path) |> Enum.at(1)
 
-  defp increment_folder_files(%{files: files} = folder_entry),
-    do: %{folder_entry | files: files + 1}
+  defp increment_folder_files_and_size(%{files: files, size: size} = folder_entry, file_size),
+    do: %{folder_entry | files: files + 1, size: size + file_size}
 
   defp user_media_on_folder(user_id, folder_path) do
     folder_path_size = String.length(folder_path)
@@ -138,6 +140,7 @@ defmodule ElixirDrip.Storage do
         id: m.id,
         full_path: m.full_path,
         file_name: m.file_name,
+        file_size: m.file_size,
         remaining_path: remaining_path(^folder_path_size, m.full_path)
       }
   end

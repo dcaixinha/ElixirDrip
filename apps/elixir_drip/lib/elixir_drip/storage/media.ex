@@ -25,7 +25,7 @@ defmodule ElixirDrip.Storage.Media do
     timestamps()
   end
 
-  def create_initial_changeset(user_id, file_name, full_path) do
+  def create_initial_changeset(user_id, file_name, full_path, file_size) do
     id = Ksuid.generate()
 
     create_changeset(%Media{}, %{
@@ -34,7 +34,8 @@ defmodule ElixirDrip.Storage.Media do
       storage_key: generate_storage_key(id, file_name),
       encryption_key: Encryption.generate_key(),
       file_name: file_name,
-      full_path: full_path
+      full_path: full_path,
+      file_size: file_size,
     })
   end
 
@@ -46,12 +47,12 @@ defmodule ElixirDrip.Storage.Media do
 
   defp generate_storage_key(id, file_name), do: id <> "_" <> Utils.generate_timestamp() <> Path.extname(file_name)
 
-  defp cast_attrs do
-    [
-      :id, :user_id, :file_name, :full_path, :metadata,
+  defp cast_attrs,
+    do: [
+      :id, :user_id, :file_name, :full_path, :file_size, :metadata,
       :encryption_key, :storage_key, :uploaded_at
-    ]
-  end
+      ]
 
-  defp required_attrs, do: [:id, :user_id, :file_name, :full_path, :storage_key]
+  defp required_attrs,
+    do: [:id, :user_id, :file_name, :full_path, :file_size, :storage_key]
 end

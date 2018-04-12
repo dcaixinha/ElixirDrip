@@ -36,10 +36,11 @@ Storage.store(jose_owner.id, "CHANGELOG.md", "$", "CHANGELOG content")
 Storage.store(jose_owner.id, "howto.md", "$/first", "howto content")
 
 Repo.query("select * from media_owners")
+Repo.query("select RIGHT('#{path}', -#{String.length(pwd)})")
+Repo.query("select LENGTH(RIGHT('#{path}', -#{String.length(pwd)}))")
+
 pwd = "$"
 pwd = "$/first/folder"
 path = "$/first/folder"
-Repo.query("select RIGHT('#{path}', -#{String.length(pwd)})")
-Repo.query("select LENGTH(RIGHT('#{path}', -#{String.length(pwd)}))")
 
 Storage.media_by_folder(jose_owner.id, pwd)
