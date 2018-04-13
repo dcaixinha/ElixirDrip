@@ -75,6 +75,7 @@ defmodule ElixirDrip.Storage do
 
   def media_by_folder(user_id, folder_path) do
     user_media_on_folder = user_media_on_folder(user_id, folder_path)
+
     folder_media = from e in subquery(user_media_on_folder),
       select: %{
         id: e.id,
@@ -103,12 +104,75 @@ defmodule ElixirDrip.Storage do
     Map.put(result, :folders, Map.values(folder_entry))
   end
 
+  def share(user_id, media_id, allowed_user_id) do
+    with {:ok, :owner} <- is_owner?(user_id, media_id) do
+      %MediaOwners{}
+      |> Changeset.cast(%{user_id: allowed_user_id, media_id: media_id}, [:user_id, :media_id])
+      |> Changeset.unique_constraint(:existing_share, name: :single_share_index)
+      |> Repo.insert()
+    else
+      error -> error
+    end
+  end
+
+  def move(user_id, media_id, new_path) do
+    with {:ok, :owner}    <- is_owner?(user_id, media_id),
+         {:ok, :valid}    <- is_valid_path?(new_path),
+         # TODO: Check if file name + full path already exists
+         # in the user_media query with EXISTS
+         %Media{} = media <- get_media(media_id)
+    do
+      media
+      |> Changeset.cast(%{full_path: new_path}, [:full_path])
+      |> Repo.update()
+    else
+      error -> error
+    end
+  end
+
+  def is_valid_path?(path) when is_binary(path) do
+    valid? = String.starts_with?(path, "$") && !String.ends_with?(path, "/")
+
+     case valid? do
+        true -> {:ok, :valid}
+        false -> {:error, :invalid_path}
+      end
+  end
+
+  def delete(user_id, media_id) do
+    with {:ok, :owner} <- is_owner?(user_id, media_id) do
+      # Given we have the foreign key with
+      # on_delete: :delete_all option
+      Repo.delete(media_id)
+    else
+      error -> error
+    end
+  end
+
   defp update_files_result(%{files: files_result}, entry) do
     new_entry = Map.take(entry, [:id, :file_name, :full_path, :file_size])
 
     [new_entry | files_result]
     |> Enum.reverse()
   end
+
+  def get_media(id), do: Repo.get!(Media, id)
+
+  def list_all_media, do: Repo.all(Media)
+
+  def get_last_media do
+    query = from media in Media,
+      order_by: [desc: media.id],
+      limit: 1
+
+    Repo.one(query)
+  end
+
+  def get_owner(id, preloaded \\ false)
+  def get_owner(id, false),
+    do: Repo.get!(Owner, id)
+  def get_owner(id, true),
+    do: Repo.get!(Owner, id) |> Repo.preload(:files)
 
   defp update_folder_result(%{folders: folder_result}, %{file_size: file_size} = entry) do
     folder_name = extract_folder_name(entry)
@@ -145,27 +209,6 @@ defmodule ElixirDrip.Storage do
       }
   end
 
-  def share(user_id, media_id, allowed_user_id) do
-    with {:ok, :owner} <- is_owner?(user_id, media_id) do
-      %MediaOwners{}
-      |> Changeset.cast(%{user_id: allowed_user_id, media_id: media_id}, [:user_id, :media_id])
-      |> Changeset.unique_constraint(:existing_share, name: :single_share_index)
-      |> Repo.insert()
-    else
-      error -> error
-    end
-  end
-
-  def delete(user_id, media_id) do
-    with {:ok, :owner} <- is_owner?(user_id, media_id) do
-      # Given we have the foreign key with
-      # on_delete: :delete_all option
-      Repo.delete(media_id)
-    else
-      error -> error
-    end
-  end
-
   defp is_owner?(user_id, media_id) do
     (from m in Media,
       where: m.id == ^media_id,
@@ -175,27 +218,6 @@ defmodule ElixirDrip.Storage do
         nil -> {:error, :not_owner}
         _ -> {:ok, :owner}
       end
-  end
-
-  def get_media(id), do: Repo.get!(Media, id)
-
-  def get_owner(id, preloaded \\ false)
-  def get_owner(id, false),
-    do: Repo.get!(Owner, id)
-  def get_owner(id, true),
-    do: Repo.get!(Owner, id) |> Repo.preload(:files)
-
-  def list_all_media do
-    Media
-    |> Repo.all()
-  end
-
-  def get_last_media do
-    Repo.one(
-      from media in Media,
-      order_by: [desc: media.id],
-      limit: 1
-    )
   end
 
   defp user_media_query(user_id) do

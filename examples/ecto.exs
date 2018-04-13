@@ -44,3 +44,8 @@ pwd = "$/first/folder"
 path = "$/first/folder"
 
 Storage.media_by_folder(jose_owner.id, pwd)
+
+last_media = Storage.media_by_folder(jose_owner.id, pwd)[:files] |> Enum.at(-1)
+last_media_id = last_media[:id]
+
+Storage.move(jose_owner.id, last_media_id, "$/qaz")
