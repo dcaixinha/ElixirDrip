@@ -51,4 +51,4 @@ last_media_id = last_media[:id]
 
 Storage.move(jose_owner.id, last_media_id, "$/qaz")
 Storage.move(jose_owner.id, readme.id, "$")
-Storage.rename(jose_owner.id, readme.id, "leiame.md")
+Storage.rename(jose_owner.id, readme.id, "README.md")

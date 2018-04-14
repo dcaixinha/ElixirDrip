@@ -89,9 +89,9 @@ defmodule ElixirDrip.Storage do
     folder_media = from e in subquery(user_media_on_folder),
       select: %{
         id: e.id,
-        file_name: e.file_name,
+        name: e.file_name,
         full_path: e.full_path,
-        file_size: e.file_size,
+        size: e.file_size,
         remaining_path: e.remaining_path,
         is_folder: is_folder(e.remaining_path)
       }
@@ -243,7 +243,7 @@ defmodule ElixirDrip.Storage do
   # end
 
   defp update_files_result(%{files: files_result}, entry) do
-    new_entry = Map.take(entry, [:id, :file_name, :full_path, :file_size])
+    new_entry = Map.take(entry, [:id, :name, :full_path, :size])
 
     [new_entry | files_result]
     |> Enum.reverse()
@@ -267,12 +267,12 @@ defmodule ElixirDrip.Storage do
   def get_owner(id, true),
     do: Repo.get!(Owner, id) |> Repo.preload(:files)
 
-  defp update_folder_result(%{folders: folder_result}, %{file_size: file_size} = entry) do
+  defp update_folder_result(%{folders: folder_result}, %{size: file_size} = entry) do
     folder_name = extract_folder_name(entry)
 
     updated_folder_entry = case Map.has_key?(folder_result, folder_name) do
       true -> increment_folder_files_and_size(folder_result[folder_name], file_size)
-      false -> %{folder_name: folder_name, files: 1, size: file_size}
+      false -> %{name: folder_name, files: 1, size: file_size}
     end
 
     Map.put(folder_result, folder_name, updated_folder_entry)
