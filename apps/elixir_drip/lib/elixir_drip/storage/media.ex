@@ -43,7 +43,51 @@ defmodule ElixirDrip.Storage.Media do
     media
     |> Changeset.cast(attrs, cast_attrs())
     |> Changeset.validate_required(required_attrs())
+    |> validate_field(:full_path)
+    |> validate_field(:file_name)
   end
+
+  def validate_field(changeset, :full_path) do
+    validator = &is_valid_path?/1
+    error_msg = "Invalid full path"
+
+    _validate_field(changeset, :full_path, validator, error_msg)
+  end
+
+  def validate_field(changeset, :file_name) do
+    validator = &is_valid_name?/1
+    error_msg = "Invalid file name"
+
+    _validate_field(changeset, :file_name, validator, error_msg)
+  end
+
+  defp _validate_field(changeset, field, validator, error_msg) do
+    Changeset.validate_change(changeset, field, fn _, value ->
+      case validator.(value) do
+        {:ok, :valid} -> []
+        _ -> [{field, error_msg}]
+      end
+    end)
+  end
+
+  def is_valid_path?(path) when is_binary(path) do
+    valid? = String.starts_with?(path, "$") && !String.ends_with?(path, "/")
+
+     case valid? do
+        true -> {:ok, :valid}
+        false -> {:error, :invalid_path}
+      end
+  end
+
+  def is_valid_name?(name) when is_binary(name) do
+    valid? = byte_size(name) > 0 && !String.contains?(name, "/")
+
+     case valid? do
+        true -> {:ok, :valid}
+        false -> {:error, :invalid_name}
+      end
+  end
+
 
   defp generate_storage_key(id, file_name), do: id <> "_" <> Utils.generate_timestamp() <> Path.extname(file_name)
 

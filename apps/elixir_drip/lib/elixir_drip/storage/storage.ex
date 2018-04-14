@@ -18,13 +18,10 @@ defmodule ElixirDrip.Storage do
   """
   def store(user_id, file_name, full_path, content) do
     file_size = byte_size(content)
-    with {:ok, :valid} <- is_valid_path?(full_path),
-         # TODO: Don't allow a '/' on the file_name,
-         # use custom ecto validation
-         %Owner{} = owner <- get_owner(user_id),
+    with %Owner{} = owner <- get_owner(user_id),
          %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path, file_size),
          %Changeset{} = changeset <- Changeset.put_assoc(changeset, :owners, [owner]),
-         %Media{storage_key: _key} = media <- Repo.insert!(changeset)
+         {:ok, %Media{storage_key: _key} = media} <- Repo.insert(changeset)
     do
       upload_task = %{
         media: media,
@@ -35,6 +32,8 @@ defmodule ElixirDrip.Storage do
       Queue.enqueue(Queue.Upload, upload_task)
 
       {:ok, :upload_enqueued, media}
+    else
+      error -> error
     end
   end
 
@@ -76,7 +75,7 @@ defmodule ElixirDrip.Storage do
   end
 
   def media_by_folder(user_id, folder_path) do
-    with {:ok, :valid} <- is_valid_path?(folder_path) do
+    with {:ok, :valid} <- Media.is_valid_path?(folder_path) do
       _media_by_folder(user_id, folder_path)
     else
       error -> error
@@ -135,13 +134,13 @@ defmodule ElixirDrip.Storage do
     with {:ok, :owner}    <- is_owner?(user_id, media_id),
          %Media{} = media <- get_media(media_id),
          new_path         <- new_path(media, new_path),
-         {:ok, :valid}    <- is_valid_path?(new_path),
          new_name         <- new_name(media, new_name),
-         {:ok, :valid}    <- is_valid_name?(new_name),
          {:ok, :nonexistent} <- media_already_exists?(user_id, new_path, new_name)
     do
       media
       |> Changeset.cast(%{full_path: new_path, file_name: new_name}, [:full_path, :file_name])
+      |> Media.validate_field(:full_path)
+      |> Media.validate_field(:file_name)
       |> Repo.update()
     else
       error -> error
@@ -153,24 +152,6 @@ defmodule ElixirDrip.Storage do
 
   defp new_name(media, nil), do: media.file_name
   defp new_name(_media, new_name), do: new_name
-
-  def is_valid_path?(path) when is_binary(path) do
-    valid? = String.starts_with?(path, "$") && !String.ends_with?(path, "/")
-
-     case valid? do
-        true -> {:ok, :valid}
-        false -> {:error, :invalid_path}
-      end
-  end
-
-  def is_valid_name?(name) when is_binary(name) do
-    valid? = byte_size(name) > 0 && !String.contains?(name, "/")
-
-     case valid? do
-        true -> {:ok, :valid}
-        false -> {:error, :invalid_name}
-      end
-  end
 
   def delete(user_id, media_id) do
     with {:ok, :owner} <- is_owner?(user_id, media_id) do
