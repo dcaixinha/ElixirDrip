@@ -52,8 +52,7 @@ defmodule ElixirDrip.Storage do
     user_media = user_media_query(user_id)
 
     media_query = from [_mo, m] in user_media,
-      where: m.id == ^media_id,
-      select: m
+      where: m.id == ^media_id
 
     case Repo.one(media_query) do
       nil   -> {:error, :not_found}
@@ -67,11 +66,8 @@ defmodule ElixirDrip.Storage do
     # user_media_query
     # The alternative would be to use subqueries
     # or to exclude the previous :select field from the query
-    user_media = user_media_query(user_id)
-    media_query = from [_mo, m] in user_media,
-      select: m
-
-    Repo.all(media_query)
+    user_media_query(user_id)
+    |> Repo.all()
   end
 
   def media_by_folder(user_id, folder_path) do
@@ -268,7 +264,10 @@ defmodule ElixirDrip.Storage do
   defp user_media_on_folder(user_id, folder_path) do
     folder_path_size = String.length(folder_path)
     folder_path_size = -folder_path_size
+
+    # given we want to do a select below, we exclude it first
     user_media = user_media_query(user_id)
+                 |> exclude(:select)
 
     # Example without macro, that works
     # select: [m.id, fragment("length(right(?, ?))", m.full_path, ^folder_path_size)]
@@ -298,7 +297,8 @@ defmodule ElixirDrip.Storage do
     from media_owner in MediaOwners,
       join: media in Media,
       on: media_owner.media_id == media.id,
-      where: media_owner.user_id == ^user_id
+      where: media_owner.user_id == ^user_id,
+      select: media
   end
 
   defp _retrieve(%Media{} = media) do
