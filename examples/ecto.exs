@@ -9,6 +9,7 @@ alias ElixirDrip.Accounts
 alias ElixirDrip.Storage
 alias ElixirDrip.Storage.Media
 alias ElixirDrip.Storage.Owner
+alias ElixirDrip.Storage.MediaOwners
 import Ecto.Query
 
 q1 = from u in Owner,
@@ -45,6 +46,9 @@ pwd = "$/first/folder"
 path = "$/first/folder"
 
 Storage.media_by_folder(jose_owner.id, pwd)
+
+Storage.user_media_query_alternative(jose_owner.id)
+Storage.user_media_query_old(jose_owner.id)
 
 last_media = Storage.media_by_folder(jose_owner.id, pwd)[:files] |> Enum.at(-1)
 last_media_id = last_media[:id]

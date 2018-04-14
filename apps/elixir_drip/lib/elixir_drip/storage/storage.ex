@@ -293,12 +293,24 @@ defmodule ElixirDrip.Storage do
       end
   end
 
-  defp user_media_query(user_id) do
+  defp user_media_query(user_id), do: user_media_query_old(user_id)
+
+  def user_media_query_old(user_id) do
     from media_owner in MediaOwners,
       join: media in Media,
       on: media_owner.media_id == media.id,
       where: media_owner.user_id == ^user_id,
       select: media
+  end
+
+  def user_media_query_alternative(user_id) do
+    owner = %Owner{id: user_id}
+
+    # Ecto.assoc(user, [:files]) |> Repo.all
+    # would return all files (%Media) from that user
+
+    from [m, _o] in Ecto.assoc(owner, [:files]),
+      select: m
   end
 
   defp _retrieve(%Media{} = media) do
