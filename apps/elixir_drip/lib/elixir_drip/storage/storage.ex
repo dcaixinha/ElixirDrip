@@ -18,9 +18,10 @@ defmodule ElixirDrip.Storage do
   """
   def store(user_id, file_name, full_path, content) do
     file_size = byte_size(content)
-    # TODO: Don't allow a '/' on the file_name,
-    # use custom ecto validation
-    with %Owner{} = owner <- get_owner(user_id),
+    with {:ok, :valid} <- is_valid_path?(full_path),
+         # TODO: Don't allow a '/' on the file_name,
+         # use custom ecto validation
+         %Owner{} = owner <- get_owner(user_id),
          %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path, file_size),
          %Changeset{} = changeset <- Changeset.put_assoc(changeset, :owners, [owner]),
          %Media{storage_key: _key} = media <- Repo.insert!(changeset)
@@ -66,6 +67,7 @@ defmodule ElixirDrip.Storage do
     # that's why we don't do any `select` on the
     # user_media_query
     # The alternative would be to use subqueries
+    # or to exclude the previous :select field from the query
     user_media = user_media_query(user_id)
     media_query = from [_mo, m] in user_media,
       select: m
@@ -74,6 +76,14 @@ defmodule ElixirDrip.Storage do
   end
 
   def media_by_folder(user_id, folder_path) do
+    with {:ok, :valid} <- is_valid_path?(folder_path) do
+      _media_by_folder(user_id, folder_path)
+    else
+      error -> error
+    end
+  end
+
+  defp _media_by_folder(user_id, folder_path) do
     user_media_on_folder = user_media_on_folder(user_id, folder_path)
 
     folder_media = from e in subquery(user_media_on_folder),
@@ -115,20 +125,34 @@ defmodule ElixirDrip.Storage do
     end
   end
 
-  def move(user_id, media_id, new_path) do
+  def move(user_id, media_id, new_path),
+    do: move(user_id, media_id, new_path, nil)
+
+  def rename(user_id, media_id, new_name),
+    do: move(user_id, media_id, nil, new_name)
+
+  defp move(user_id, media_id, new_path, new_name) do
     with {:ok, :owner}    <- is_owner?(user_id, media_id),
+         %Media{} = media <- get_media(media_id),
+         new_path         <- new_path(media, new_path),
          {:ok, :valid}    <- is_valid_path?(new_path),
-         # TODO: Check if file name + full path already exists
-         # in the user_media query with EXISTS
-         %Media{} = media <- get_media(media_id)
+         new_name         <- new_name(media, new_name),
+         {:ok, :valid}    <- is_valid_name?(new_name),
+         {:ok, :nonexistent} <- media_already_exists?(user_id, new_path, new_name)
     do
       media
-      |> Changeset.cast(%{full_path: new_path}, [:full_path])
+      |> Changeset.cast(%{full_path: new_path, file_name: new_name}, [:full_path, :file_name])
       |> Repo.update()
     else
       error -> error
     end
   end
+
+  defp new_path(media, nil), do: media.full_path
+  defp new_path(_media, new_path), do: new_path
+
+  defp new_name(media, nil), do: media.file_name
+  defp new_name(_media, new_name), do: new_name
 
   def is_valid_path?(path) when is_binary(path) do
     valid? = String.starts_with?(path, "$") && !String.ends_with?(path, "/")
@@ -136,6 +160,15 @@ defmodule ElixirDrip.Storage do
      case valid? do
         true -> {:ok, :valid}
         false -> {:error, :invalid_path}
+      end
+  end
+
+  def is_valid_name?(name) when is_binary(name) do
+    valid? = byte_size(name) > 0 && !String.contains?(name, "/")
+
+     case valid? do
+        true -> {:ok, :valid}
+        false -> {:error, :invalid_name}
       end
   end
 
@@ -148,6 +181,66 @@ defmodule ElixirDrip.Storage do
       error -> error
     end
   end
+
+  def media_already_exists?(user_id, full_path, file_name) do
+    user_media = user_media_query(user_id)
+
+    query = from [_mo, m] in user_media,
+      where: m.full_path == ^full_path,
+      where: m.file_name == ^file_name
+
+    {query, vars} = Repo.to_sql(:all, query)
+    query = "SELECT TRUE WHERE EXISTS (#{query})"
+
+    Repo.query!(query, vars).rows
+    |> Enum.empty?()
+    |> case do
+      true -> {:ok, :nonexistent}
+      _    -> {:error, :already_exists}
+    end
+  end
+
+  def media_already_exists_limit?(user_id, full_path, file_name) do
+    user_media = user_media_query(user_id)
+
+    query = from [_mo, m] in user_media,
+      where: m.full_path == ^full_path,
+      where: m.file_name == ^file_name
+
+    result =
+      query
+      # resets any query field, except `from`
+      # useful for queries with previous selects
+      |> exclude(:select)
+      |> limit(1)
+      |> select(true)
+      |> Repo.one()
+
+    case result do
+      true -> {:error, :already_exists}
+      _    -> {:ok, :nonexistent}
+    end
+  end
+
+  # TODO: Not working fragment with full SELECT query
+  # def media_already_exists_query_nok?(user_id, full_path, file_name) do
+  #   user_media = user_media_query(user_id)
+
+  #   query = from [_mo, m] in user_media,
+  #     where: m.full_path == ^full_path,
+  #     where: m.file_name == ^file_name
+
+  #   zaz = "SELECT * " <> \
+  #   "FROM \"storage_media\" m inner join \"media_owners\" mo on m.id = mo.media_id " <> \
+  #   "WHERE mo.user_id = '#{user_id}' " <> \
+  #   "AND m.full_path = '#{full_path}' " <> \
+  #   "AND m.file_name = '#{file_name}'"
+
+  #   to_run = from m in Media,
+  #     select: fragment("EXISTS(?)", ^zaz)
+
+  #   result = Repo.one(to_run)
+  # end
 
   defp update_files_result(%{files: files_result}, entry) do
     new_entry = Map.take(entry, [:id, :file_name, :full_path, :file_size])

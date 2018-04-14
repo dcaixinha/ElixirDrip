@@ -36,6 +36,7 @@ Storage.store(jose_owner.id, "CHANGELOG.md", "$", "CHANGELOG content")
 Storage.store(jose_owner.id, "howto.md", "$/first", "howto content")
 
 Repo.query("select * from media_owners")
+Repo.query("select exists(select * from storage_media where full_path = '$' and file_name = 'README.md')")
 Repo.query("select RIGHT('#{path}', -#{String.length(pwd)})")
 Repo.query("select LENGTH(RIGHT('#{path}', -#{String.length(pwd)}))")
 
@@ -49,3 +50,5 @@ last_media = Storage.media_by_folder(jose_owner.id, pwd)[:files] |> Enum.at(-1)
 last_media_id = last_media[:id]
 
 Storage.move(jose_owner.id, last_media_id, "$/qaz")
+Storage.move(jose_owner.id, readme.id, "$")
+Storage.rename(jose_owner.id, readme.id, "leiame.md")
