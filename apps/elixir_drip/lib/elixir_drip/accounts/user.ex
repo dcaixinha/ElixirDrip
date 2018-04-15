@@ -17,7 +17,7 @@ defmodule ElixirDrip.Accounts.User do
   end
 
   @doc false
-  def create_changeset(%User{} = user, attrs) do
+  def create_changeset(%User{} = user, attrs \\ %{}) do
     user
     |> cast(attrs, [:username, :password, :email])
     |> validate_required([:username, :password, :email])

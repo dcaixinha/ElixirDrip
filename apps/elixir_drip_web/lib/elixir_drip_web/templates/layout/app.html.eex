@@ -7,29 +7,46 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Hello ElixirDripWeb!</title>
+    <title>Welcome to ElixirDrip!</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
 
   <body>
-    <div class="container">
+    <div class="container-fluid">
       <header class="header">
-        <nav role="navigation">
-          <ul class="nav nav-pills pull-right">
-            <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
-          </ul>
-        </nav>
+        <ul class="breadcrumb text-right">
+          <%= if assigns[:current_user] do %>
+            <li>Hi, <%= assigns[:current_user].username %>!</li>
+            <li><%= link("Logout", to: session_path(@conn, :delete), method: "delete") %></li>
+          <% else %>
+            <li><%= link("Sign Up", to: user_path(@conn, :new)) %></li>
+            <li><%= link("Login", to: session_path(@conn, :new)) %></li>
+          <% end %>
+        </ul>
         <span class="logo"></span>
       </header>
 
-      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
-      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+      <%= if assigns[:current_user] do %>
+        <div>
+          <!-- <h4 class="">Online users:</h4> -->
+          <!-- <ul> -->
+          <!-- <li>Test</li> -->
+          <!-- <li>123</li> -->
+          <!-- <li>456</li> -->
+          <!-- </ul> -->
+        </div>
+      <% end %>
+
+      <p class="alert alert-info" role="alert" id="notify_info"><%= get_flash(@conn, :info) %></p>
+      <p class="alert alert-success" role="alert" id="notify_success"></p>
+      <p class="alert alert-danger" role="alert" id="notify_error"><%= get_flash(@conn, :error) %></p>
 
       <main role="main">
         <%= render @view_module, @view_template, assigns %>
       </main>
-
-    </div> <!-- /container -->
+    </div>
+    <script>window.userId = "<%= assigns[:user_id] %>"</script>
+    <script>window.userToken = "<%= assigns[:user_token] %>"</script>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

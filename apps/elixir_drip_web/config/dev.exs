@@ -8,8 +8,9 @@ use Mix.Config
 # with brunch.io to recompile .js and .css sources.
 config :elixir_drip_web, ElixirDripWeb.Endpoint,
   http: [port: 4000],
-  debug_errors: true,
+  debug_errors: false,
   code_reloader: true,
+  cache_static_lookup: false,
   check_origin: false,
   watchers: [
     node: [

@@ -39,7 +39,7 @@ defmodule ElixirDrip.Storage.Media do
     })
   end
 
-  def create_changeset(%Media{} = media, attrs) do
+  def create_changeset(%Media{} = media, attrs \\ %{}) do
     media
     |> Changeset.cast(attrs, cast_attrs())
     |> Changeset.validate_required(required_attrs())

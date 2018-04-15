@@ -21,14 +21,11 @@ defmodule ElixirDrip.Storage.Pipeline.Notifier do
     {:noreply, [], @dummy_state}
   end
 
-  defp notify_step(%{media: media, content: content, type: :upload}) do
-    # TODO: Invoke the notifier instead!
-    Logger.debug("#{inspect(self())}: NOTIFICATION! Uploaded media #{media.id} to #{media.storage_key} with size: #{byte_size(content)} bytes.")
+  defp notify_step(%{media: %{id: id}, user_id: user_id, type: :download}) do
+    ElixirDripWeb.Notifications.notify(:download, id, user_id)
   end
 
-  defp notify_step(%{media: %{id: id}, content: content, type: :download}) do
-    # TODO: Invoke the notifier instead!
-    Logger.debug("#{inspect(self())}: NOTIFICATION! Downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
+  defp notify_step(%{media: %{file_name: file_name}, user_id: user_id, type: :upload}) do
+    ElixirDripWeb.Notifications.notify(:upload, file_name, user_id)
   end
 end
-

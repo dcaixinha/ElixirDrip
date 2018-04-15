@@ -8,7 +8,8 @@ defmodule ElixirDripWeb.Application do
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
-      supervisor(ElixirDripWeb.Endpoint, [])
+      supervisor(ElixirDripWeb.Endpoint, []),
+      worker(ElixirDripWeb.Notifications, [])
       # Start your own worker by calling: ElixirDripWeb.Worker.start_link(arg1, arg2, arg3)
       # worker(ElixirDripWeb.Worker, [arg1, arg2, arg3]),
     ]

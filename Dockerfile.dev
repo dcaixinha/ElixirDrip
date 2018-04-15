@@ -19,7 +19,7 @@ ENV APP_NAME $app_name
 ENV HTTP_PORT $http_port
 ENV MIX_ENV $mix_env
 
-RUN apk add --no-cache build-base git inotify-tools nodejs nodejs-npm
+RUN apk add --no-cache build-base bash git inotify-tools nodejs nodejs-npm
 RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
 RUN mix local.hex --force && mix local.rebar --force
 

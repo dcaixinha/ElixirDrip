@@ -1,0 +1,21 @@
+:url = http://localhost:4000
+
+# Get media in $/abc/ghj
+
+:endpoint = api/files?path=$
+GET :url/:endpoint
+
+# Login
+
+:endpoint = api/sessions
+POST :url/:endpoint
+Content-Type: application/json
+{
+  "username": "gcaixinha",
+  "password": "123456789"
+}
+
+# Logout
+
+:endpoint = api/sessions
+DELETE :url/:endpoint

@@ -1,0 +1,26 @@
+<div>
+  <%= link("Upload File", to: file_path(@conn, :new, "path": @current_path), class: "btn btn-primary") %>
+  <%= if Enum.empty?(@folders) && Enum.empty?(@files) do %>
+    <p class="lead">This folder is empty!</p>
+  <% else %>
+    <table class="table table-striped">
+      <%= if @current_path != "$" do %>
+        <tr>
+          <td><img src="<%= static_path(@conn, "/images/folder.svg") %>"></td>
+          <td colspan="3"><%= link("..", to: file_path(@conn, :index, "path": parent_directory(@current_path))) %></td>
+        </tr>
+      <% end %>
+      <%= for folder <- @folders do %>
+        <tr>
+          <td><img src="<%= static_path(@conn, "/images/folder.svg") %>"></td>
+          <td><%= link(folder.name, to: file_path(@conn, :index, "path": @current_path <> "/" <> folder.name)) %></td>
+          <td><%= folder.size %> bytes</td>
+          <td><%= folder.files %> files</td>
+        </tr>
+      <% end %>
+      <%= for file <- @files do %>
+        <%= render("file.html", conn: @conn, file: file) %>
+      <% end %>
+    </table>
+  <% end %>
+</div>
