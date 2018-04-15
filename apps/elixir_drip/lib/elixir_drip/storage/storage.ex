@@ -78,37 +78,6 @@ defmodule ElixirDrip.Storage do
     end
   end
 
-  defp _media_by_folder(user_id, folder_path) do
-    user_media_on_folder = user_media_on_folder(user_id, folder_path)
-
-    folder_media = from e in subquery(user_media_on_folder),
-      select: %{
-        id: e.id,
-        name: e.file_name,
-        full_path: e.full_path,
-        size: e.file_size,
-        remaining_path: e.remaining_path,
-        is_folder: is_folder(e.remaining_path)
-      }
-
-    result = folder_media
-    |> Repo.all()
-    |> Enum.reduce(%{files: [], folders: %{}},
-                   fn(entry, result) ->
-                     case entry[:is_folder] do
-                       true ->
-                         folder_result = update_folder_result(result, entry)
-                         Map.put(result, :folders, folder_result)
-                       false ->
-                         files_result = update_files_result(result, entry)
-                         Map.put(result, :files, files_result)
-                     end
-                   end)
-
-    folder_entry = result[:folders]
-    Map.put(result, :folders, Map.values(folder_entry))
-  end
-
   def share(user_id, media_id, allowed_user_id) do
     with {:ok, :owner} <- is_owner?(user_id, media_id) do
       %MediaOwners{}
@@ -121,33 +90,10 @@ defmodule ElixirDrip.Storage do
   end
 
   def move(user_id, media_id, new_path),
-    do: move(user_id, media_id, new_path, nil)
+    do: _move(user_id, media_id, new_path, nil)
 
   def rename(user_id, media_id, new_name),
-    do: move(user_id, media_id, nil, new_name)
-
-  defp move(user_id, media_id, new_path, new_name) do
-    with {:ok, :owner}    <- is_owner?(user_id, media_id),
-         %Media{} = media <- get_media(media_id),
-         new_path         <- new_path(media, new_path),
-         new_name         <- new_name(media, new_name),
-         {:ok, :nonexistent} <- media_already_exists?(user_id, new_path, new_name)
-    do
-      media
-      |> Changeset.cast(%{full_path: new_path, file_name: new_name}, [:full_path, :file_name])
-      |> Media.validate_field(:full_path)
-      |> Media.validate_field(:file_name)
-      |> Repo.update()
-    else
-      error -> error
-    end
-  end
-
-  defp new_path(media, nil), do: media.full_path
-  defp new_path(_media, new_path), do: new_path
-
-  defp new_name(media, nil), do: media.file_name
-  defp new_name(_media, new_name), do: new_name
+    do: _move(user_id, media_id, nil, new_name)
 
   def delete(user_id, media_id) do
     with {:ok, :owner} <- is_owner?(user_id, media_id) do
@@ -219,17 +165,26 @@ defmodule ElixirDrip.Storage do
   #   result = Repo.one(to_run)
   # end
 
-  defp update_files_result(%{files: files_result}, entry) do
-    new_entry = Map.take(entry, [:id, :name, :full_path, :size])
+  def get_media(media_id), do: Repo.get!(Media, media_id)
 
-    [new_entry | files_result]
-    |> Enum.reverse()
+  def get_media(user_id, media_id) do
+    user_media = user_media_query(user_id)
+
+    media_query = from [_mo, m] in user_media,
+      where: m.id == ^media_id
+
+    case Repo.one(media_query) do
+      nil   -> {:error, :not_found}
+      media -> media_to_present(media)
+    end
   end
 
-  def get_media(id), do: Repo.get!(Media, id)
-
+  # debug only
+  @doc false
   def list_all_media, do: Repo.all(Media)
 
+  # debug only
+  @doc false
   def get_last_media do
     query = from media in Media,
       order_by: [desc: media.id],
@@ -243,6 +198,81 @@ defmodule ElixirDrip.Storage do
     do: Repo.get!(Owner, id)
   def get_owner(id, true),
     do: Repo.get!(Owner, id) |> Repo.preload(:files)
+
+  defp update_files_result(%{files: files_result}, entry) do
+    new_entry = Map.take(entry, [:id, :name, :full_path, :size])
+
+    [new_entry | files_result]
+    |> Enum.reverse()
+  end
+
+  defp _move(user_id, media_id, new_path, new_name) do
+    with {:ok, :owner}    <- is_owner?(user_id, media_id),
+         %Media{} = media <- get_media(media_id),
+         new_path         <- new_path(media, new_path),
+         new_name         <- new_name(media, new_name),
+         {:ok, :nonexistent} <- media_already_exists?(user_id, new_path, new_name)
+    do
+      media
+      |> Changeset.cast(%{full_path: new_path, file_name: new_name}, [:full_path, :file_name])
+      |> Media.validate_field(:full_path)
+      |> Media.validate_field(:file_name)
+      |> Repo.update()
+    else
+      error -> error
+    end
+  end
+
+  defp new_path(media, nil), do: media.full_path
+  defp new_path(_media, new_path), do: new_path
+
+  defp new_name(media, nil), do: media.file_name
+  defp new_name(_media, new_name), do: new_name
+
+
+  defp _media_by_folder(user_id, folder_path) do
+    user_media_on_folder = user_media_on_folder(user_id, folder_path)
+
+    folder_media = from e in subquery(user_media_on_folder),
+      select: %{
+        id: e.id,
+        name: e.file_name,
+        full_path: e.full_path,
+        size: e.file_size,
+        remaining_path: e.remaining_path,
+        is_folder: is_folder(e.remaining_path)
+      }
+
+    result = folder_media
+    |> Repo.all()
+    |> Enum.reduce(%{files: [], folders: %{}},
+                   fn(entry, result) ->
+                     case entry[:is_folder] do
+                       true ->
+                         folder_result = update_folder_result(result, entry)
+                         Map.put(result, :folders, folder_result)
+                       false ->
+                         files_result = update_files_result(result, entry)
+                         Map.put(result, :files, files_result)
+                     end
+                   end)
+
+    folder_entry = result[:folders]
+    Map.put(result, :folders, Map.values(folder_entry))
+  end
+
+  defp media_to_present(%Media{id: id, file_name: name,
+    full_path: full_path, file_size: size, metadata: metadata,
+    user_id: owner_id, uploaded_at: uploaded_at}),
+    do: %{
+      id: id,
+      name: name,
+      full_path: full_path,
+      size: size,
+      metadata: metadata,
+      owner_id: owner_id,
+      uploaded_at: uploaded_at
+    }
 
   defp update_folder_result(%{folders: folder_result}, %{size: file_size} = entry) do
     folder_name = extract_folder_name(entry)
@@ -293,9 +323,7 @@ defmodule ElixirDrip.Storage do
       end
   end
 
-  defp user_media_query(user_id), do: user_media_query_old(user_id)
-
-  def user_media_query_old(user_id) do
+  defp user_media_query(user_id) do
     from media_owner in MediaOwners,
       join: media in Media,
       on: media_owner.media_id == media.id,
@@ -303,10 +331,10 @@ defmodule ElixirDrip.Storage do
       select: media
   end
 
-  def user_media_query_alternative(user_id) do
+  defp user_media_query_alternative(user_id) do
     owner = %Owner{id: user_id}
 
-    # Ecto.assoc(user, [:files]) |> Repo.all
+    # Ecto.assoc(owner, [:files]) |> Repo.all
     # would return all files (%Media) from that user
 
     from [m, _o] in Ecto.assoc(owner, [:files]),
