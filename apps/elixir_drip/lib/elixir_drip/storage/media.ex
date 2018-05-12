@@ -28,7 +28,7 @@ defmodule ElixirDrip.Storage.Media do
   def create_initial_changeset(user_id, file_name, full_path, file_size) do
     id = Ksuid.generate()
 
-    create_changeset(%Media{}, %{
+    attrs = %{
       id: id,
       user_id: user_id,
       storage_key: generate_storage_key(id, file_name),
@@ -36,32 +36,24 @@ defmodule ElixirDrip.Storage.Media do
       file_name: file_name,
       full_path: full_path,
       file_size: file_size,
-    })
-  end
+    }
 
-  def create_changeset(%Media{} = media, attrs) do
-    media
+    %Media{}
     |> Changeset.cast(attrs, cast_attrs())
     |> Changeset.validate_required(required_attrs())
     |> validate_field(:full_path)
     |> validate_field(:file_name)
   end
 
-  def validate_field(changeset, :full_path) do
-    validator = &is_valid_path?/1
-    error_msg = "Invalid full path"
+  @custom_validations [
+    full_path: %{validator: &__MODULE__.is_valid_path?/1, error_msg: "Invalid full path"},
+    file_name: %{validator: &__MODULE__.is_valid_name?/1, error_msg: "Invalid file name"},
+  ]
 
-    _validate_field(changeset, :full_path, validator, error_msg)
-  end
+  def validate_field(changeset, field) do
+    validator = @custom_validations[field][:validator]
+    error_msg = @custom_validations[field][:error_msg]
 
-  def validate_field(changeset, :file_name) do
-    validator = &is_valid_name?/1
-    error_msg = "Invalid file name"
-
-    _validate_field(changeset, :file_name, validator, error_msg)
-  end
-
-  defp _validate_field(changeset, field, validator, error_msg) do
     Changeset.validate_change(changeset, field, fn _, value ->
       case validator.(value) do
         {:ok, :valid} -> []
@@ -88,7 +80,6 @@ defmodule ElixirDrip.Storage.Media do
       end
   end
 
-
   defp generate_storage_key(id, file_name), do: id <> "_" <> Utils.generate_timestamp() <> Path.extname(file_name)
 
   defp cast_attrs,
@@ -98,5 +89,5 @@ defmodule ElixirDrip.Storage.Media do
       ]
 
   defp required_attrs,
-    do: [:id, :user_id, :file_name, :full_path, :file_size, :storage_key]
+    do: [:id, :user_id, :file_name, :full_path, :file_size, :encryption_key, :storage_key]
 end
