@@ -1,6 +1,6 @@
-FROM bitwalker/alpine-elixir:latest
+FROM elixir:1.6.4-alpine
 
-MAINTAINER ElixirDrip "dev@elixirdrip.io"
+LABEL maintainer="dev@elixirdrip.io"
 
 ARG mix_env=prod
 ARG https_port=4040
@@ -27,10 +27,11 @@ ENV EPMD_PORT $epmd_port
 ENV MIX_ENV $mix_env
 ENV REPLACE_OS_VARS $replace_os_vars
 
-RUN apk add --no-cache inotify-tools nodejs nodejs-npm
+RUN apk add --no-cache build-base git nodejs nodejs-npm
 RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
+RUN mix local.hex --force && mix local.rebar --force
 
-ADD . $APP_PATH/$APP_NAME
+COPY . $APP_PATH/$APP_NAME
 
 WORKDIR $APP_PATH/$APP_NAME
 

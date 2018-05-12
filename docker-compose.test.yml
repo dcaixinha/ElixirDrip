@@ -11,8 +11,6 @@ services:
     command: ["/bin/sh", "script/test.sh"]
     ports:
       - 4000:4000
-    volumes:
-      - ./test/reports:/opt/app/elixir_drip/test/reports
     depends_on:
       postgres:
         condition: service_healthy
