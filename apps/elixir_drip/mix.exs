@@ -36,7 +36,7 @@ defmodule ElixirDrip.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:postgrex, ">= 0.0.0"},
+      {:postgrex, "~> 0.13"},
       {:ecto, "~> 2.1"},
       {:ksuid, "~> 0.1.2"},
       {:arc, github: "stavro/arc", override: true},

@@ -26,7 +26,8 @@ defmodule ElixirDrip.Ecto.Ksuid do
 
   def type, do: :string
 
-  def cast(ksuid) when is_binary(ksuid), do: {:ok, ksuid}
+  def cast(ksuid)
+    when is_binary(ksuid) and byte_size(ksuid) == 27, do: {:ok, ksuid}
   def cast(_), do: :error
 
   def cast!(value) do
