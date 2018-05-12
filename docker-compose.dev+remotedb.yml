@@ -1,0 +1,35 @@
+version: '2.1'
+services:
+  app:
+    image: elixir_drip:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file: ./env/dev.env
+    environment:
+      DB_USER: postgres
+      DB_PASS: dmJkzNco16KkH4yB
+      DB_NAME: elixir_drip_dev
+      DB_HOST: postgres-cloud
+    ports:
+      - 4000:4000
+    command: sh /opt/app/elixir_drip/script/start.sh
+    depends_on:
+      postgres-cloud:
+        condition: service_started
+    networks:
+      - default
+    volumes:
+      - .:/opt/app/elixir_drip
+  postgres-cloud:
+    environment:
+      INSTANCE_CONNECTION_NAME: intense-talent-188323:europe-west1:elixir-drip-production
+    image: gcr.io/cloudsql-docker/gce-proxy:1.11
+    volumes:
+        - /cloudsql:/cloudsql
+        - ./secrets/elixirdrip-prod-sql-client-creds.json:/creds.json
+    command: ["/cloud_sql_proxy", "-instances=intense-talent-188323:europe-west1:elixir-drip-production=tcp:0.0.0.0:5432", "-credential_file=/creds.json"]
+    ports:
+      - 5000:5432
+    networks:
+      - default
