@@ -1,9 +1,5 @@
 use Mix.Config
 
-config :junit_formatter,
-  report_file:        "results.xml",
-  print_report_file:  true
-
 # By default, the umbrella project as well as each child
 # application will require this configuration file, ensuring
 # they all use the same configuration. While one could
