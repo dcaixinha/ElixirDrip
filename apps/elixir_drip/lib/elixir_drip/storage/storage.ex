@@ -21,7 +21,7 @@ defmodule ElixirDrip.Storage do
     with %Owner{} = owner <- get_owner(user_id),
          %Changeset{} = changeset <- Media.create_initial_changeset(owner.id, file_name, full_path, file_size),
          %Changeset{} = changeset <- Changeset.put_assoc(changeset, :owners, [owner]),
-         {:ok, %Media{storage_key: _key} = media} <- Repo.insert(changeset)
+         {:ok, %Media{} = media} <- Repo.insert(changeset)
     do
       upload_task = %{
         media: media,
@@ -39,7 +39,7 @@ defmodule ElixirDrip.Storage do
 
   def set_upload_timestamp(%Media{} = media) do
     media
-    |> Media.create_changeset(%{uploaded_at: DateTime.utc_now()})
+    |> Changeset.cast(%{uploaded_at: DateTime.utc_now()}, [:uploaded_at])
     |> Repo.update!()
   end
 
@@ -79,10 +79,12 @@ defmodule ElixirDrip.Storage do
   end
 
   def share(user_id, media_id, allowed_user_id) do
-    with {:ok, :owner} <- is_owner?(user_id, media_id) do
+    with {:ok, :creator} <- is_creator?(user_id, media_id) do
       %MediaOwners{}
       |> Changeset.cast(%{user_id: allowed_user_id, media_id: media_id}, [:user_id, :media_id])
       |> Changeset.unique_constraint(:existing_share, name: :single_share_index)
+      |> Changeset.foreign_key_constraint(:user_id)
+      |> Changeset.foreign_key_constraint(:media_id)
       |> Repo.insert()
     else
       error -> error
@@ -96,10 +98,11 @@ defmodule ElixirDrip.Storage do
     do: _move(user_id, media_id, nil, new_name)
 
   def delete(user_id, media_id) do
-    with {:ok, :owner} <- is_owner?(user_id, media_id) do
+    with {:ok, :creator} <- is_creator?(user_id, media_id) do
       # Given we have the foreign key with
       # on_delete: :delete_all option
-      Repo.delete(media_id)
+      %Media{id: media_id}
+      |> Repo.delete()
     else
       error -> error
     end
@@ -193,11 +196,53 @@ defmodule ElixirDrip.Storage do
     Repo.one(query)
   end
 
+  def get_top_users_by_usage(sort_field \\ :media_count, sort_order \\ :desc, top \\ 10) do
+    schemaless_users_media = from u in "users",
+    left_join: m in "storage_media",
+    on: u.id == m.user_id,
+    group_by: u.id,
+    select: %{
+      media_count: count(m.id),
+      disk_usage: sum(m.file_size),
+      username: u.username
+    }
+
+    dynamic_schemaless_users_media = from e in subquery(schemaless_users_media),
+      order_by: [{^sort_order, field(e, ^sort_field)}],
+      limit: ^top
+
+    Repo.all(dynamic_schemaless_users_media)
+  end
+
   def get_owner(id, preloaded \\ false)
   def get_owner(id, false),
     do: Repo.get!(Owner, id)
   def get_owner(id, true),
     do: Repo.get!(Owner, id) |> Repo.preload(:files)
+
+  def get_owners_preload do
+    # Still does one more query
+    Repo.all(from u in Owner, preload: [:files])
+  end
+
+  def get_owners_preload_v2 do
+    # one query, but "manual" join
+    query = from o in Owner,
+      join: mo in MediaOwners,
+      on: o.id == mo.user_id,
+      join: f in Media,
+      on: mo.media_id == f.id,
+      preload: [files: f]
+
+    Repo.all(query)
+  end
+
+  def get_owners_preload_v3 do
+    # Does only one query
+    Repo.all(from u in Owner,
+      join: f in assoc(u, :files),
+      preload: [files: f])
+  end
 
   defp update_files_result(%{files: files_result}, entry) do
     new_entry = Map.take(entry, [:id, :name, :full_path, :size])
@@ -207,7 +252,7 @@ defmodule ElixirDrip.Storage do
   end
 
   defp _move(user_id, media_id, new_path, new_name) do
-    with {:ok, :owner}    <- is_owner?(user_id, media_id),
+    with {:ok, :creator}  <- is_creator?(user_id, media_id),
          %Media{} = media <- get_media(media_id),
          new_path         <- new_path(media, new_path),
          new_name         <- new_name(media, new_name),
@@ -243,8 +288,13 @@ defmodule ElixirDrip.Storage do
         is_folder: is_folder(e.remaining_path)
       }
 
-    result = folder_media
+    folder_media
     |> Repo.all()
+    |> files_and_folders_to_present()
+  end
+
+  defp files_and_folders_to_present(results) do
+    result = results
     |> Enum.reduce(%{files: [], folders: %{}},
                    fn(entry, result) ->
                      case entry[:is_folder] do
@@ -299,8 +349,6 @@ defmodule ElixirDrip.Storage do
     user_media = user_media_query(user_id)
                  |> exclude(:select)
 
-    # Example without macro, that works
-    # select: [m.id, fragment("length(right(?, ?))", m.full_path, ^folder_path_size)]
     from [_mo, m] in user_media,
       where: like(m.full_path, ^"#{folder_path}%"),
       select: %{
@@ -312,14 +360,14 @@ defmodule ElixirDrip.Storage do
       }
   end
 
-  defp is_owner?(user_id, media_id) do
+  defp is_creator?(user_id, media_id) do
     (from m in Media,
       where: m.id == ^media_id,
       where: m.user_id == ^user_id)
       |> Repo.one()
       |> case do
-        nil -> {:error, :not_owner}
-        _ -> {:ok, :owner}
+        nil -> {:error, :not_creator}
+        _ -> {:ok, :creator}
       end
   end
 
