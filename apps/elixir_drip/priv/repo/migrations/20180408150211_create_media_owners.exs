@@ -8,7 +8,5 @@ defmodule ElixirDrip.Repo.Migrations.CreateMediaOwners do
 
       timestamps(type: :utc_datetime)
     end
-
-    create unique_index(:media_owners, [:media_id, :user_id], name: :single_share_index)
   end
 end
