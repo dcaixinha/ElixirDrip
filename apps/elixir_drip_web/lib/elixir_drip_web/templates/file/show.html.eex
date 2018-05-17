@@ -11,4 +11,5 @@
     </tr>
   </table>
   <%= link("Back to folder", to: file_path(@conn, :index, "path": @file.full_path), class: "btn btn-default") %>
+  <button id="share_file_btn" class="btn btn-primary">Share File</button>
 </div>
