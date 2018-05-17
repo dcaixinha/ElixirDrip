@@ -54,7 +54,6 @@ let socket = new Socket("/socket", {
 // Finally, pass the token on connect as below. Or remove it
 // from connect if you don't care about authentication.
 
-// socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
 // let channel = socket.channel("users:456", {})
@@ -64,5 +63,7 @@ let socket = new Socket("/socket", {
 
 // channel.on("ping", ({count}) => console.log("PING", count))
 // channel.on("download", ({details}) => console.log("DOWNLOAD", details))
+
+socket.connect()
 
 export default socket

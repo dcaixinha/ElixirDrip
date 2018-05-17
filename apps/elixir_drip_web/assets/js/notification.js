@@ -1,7 +1,5 @@
 let Notification = {
   init(socket, userId) {
-    socket.connect()
-
     let infoArea = document.getElementById("notify_info")
     let successArea = document.getElementById("notify_success")
     let userChannel = socket.channel("users:" + userId)

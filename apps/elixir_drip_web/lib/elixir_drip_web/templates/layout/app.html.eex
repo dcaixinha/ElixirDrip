@@ -27,14 +27,8 @@
       </header>
 
       <%= if assigns[:current_user] do %>
-        <div>
-          <!-- <h4 class="">Online users:</h4> -->
-          <!-- <ul> -->
-          <!-- <li>Test</li> -->
-          <!-- <li>123</li> -->
-          <!-- <li>456</li> -->
-          <!-- </ul> -->
-        </div>
+        <h4 class="">Online users:</h4>
+        <div id="online_users"></div>
       <% end %>
 
       <p class="alert alert-info" role="alert" id="notify_info"><%= get_flash(@conn, :info) %></p>

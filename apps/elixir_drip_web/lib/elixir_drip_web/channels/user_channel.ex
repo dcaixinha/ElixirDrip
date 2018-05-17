@@ -1,17 +1,27 @@
 defmodule ElixirDripWeb.UserChannel do
   use ElixirDripWeb, :channel
+  alias ElixirDripWeb.Presence
 
-  def join("users:" <> _user_id, auth_message, socket) do
-    # :timer.send_interval(5_000, :ping)
-
-    # {:ok, assign(socket, :user_id, user_id)}
+  def join("users:lobby", _auth_message, socket) do
+    send(self(), :after_join)
     {:ok, socket}
   end
 
-  # def handle_info(:ping, socket) do
-  #   count = socket.assigns[:count] || 1
-  #   push(socket, "ping", %{count: count})
+  def join("users:" <> _user_id, _auth_message, socket) do
+    {:ok, socket}
+  end
 
-  #   {:noreply, assign(socket, :count, count + 1)}
-  # end
+  def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+
+    user = Accounts.find_user(socket.assigns.user_id)
+
+    {:ok, _} =
+      Presence.track(socket, socket.assigns.user_id, %{
+        username: user.username
+      })
+
+    {:noreply, socket}
+  end
+
 end
