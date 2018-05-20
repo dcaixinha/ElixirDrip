@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: elixir-drip-migrations
+  namespace: production
+  labels:
+    env: production
+spec:
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      generateName: elixir-drip-migrations
+      labels:
+        env: production
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: gcr.io/intense-talent-188323/elixir-drip-prod:v0.0.8
+          name: elixir-drip-migrations
+          command: ["/bin/sh", "script/migrate.sh"]
+          env:
+            - name: MIX_ENV
+              value: "migration"
+            - name: PORT
+              value: "4000"
+            - name: DB_NAME
+              value: elixir_drip_prod
+            - name: DB_HOST
+              value: 127.0.0.1
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-postgres-credentials
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-postgres-credentials
+                  key: password
+        - image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          name: cloudsql-proxy
+          command: ["/cloud_sql_proxy",
+                    "-instances=intense-talent-188323:europe-west1:elixir-drip-production=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: cloudsql-proxy-creds-volume
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-proxy-creds-volume
+          secret:
+            secretName: cloudsql-proxy-credentials
