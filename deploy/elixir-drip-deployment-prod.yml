@@ -1,0 +1,74 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elixir-drip
+  namespace: production
+  labels:
+    app: elixir-drip
+    env: production
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+      maxSurge: 50%
+  template:
+    metadata:
+      labels:
+        app: elixir-drip
+        env: production
+    spec:
+      containers:
+        - image: gcr.io/intense-talent-188323/elixir-drip-prod:v0.0.8
+          name: elixir-drip-prod
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 60
+            timeoutSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 60
+            timeoutSeconds: 15
+          ports:
+            - name: http
+              containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: DB_NAME
+              value: elixir_drip_prod
+            - name: DB_HOST
+              value: 127.0.0.1
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-postgres-credentials
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-postgres-credentials
+                  key: password
+        - image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          name: cloudsql-proxy
+          command: ["/cloud_sql_proxy",
+                    "-instances=intense-talent-188323:europe-west1:elixir-drip-production=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: cloudsql-proxy-creds-volume
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-proxy-creds-volume
+          secret:
+            secretName: cloudsql-proxy-credentials
