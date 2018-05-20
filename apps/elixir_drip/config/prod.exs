@@ -8,4 +8,5 @@ config :elixir_drip, ElixirDrip.Repo,
   password: "${DB_PASS}",
   database: "${DB_NAME}",
   hostname: "${DB_HOST}",
+  port: "${DB_PORT}",
   pool_size: 15
