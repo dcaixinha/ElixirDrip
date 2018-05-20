@@ -3,8 +3,9 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
   require Logger
   alias   ElixirDrip.Storage
-  alias   Storage.Provider
   alias   Storage.Supervisors.CacheSupervisor, as: Cache
+
+  @provider Application.get_env(:elixir_drip, :storage_provider)
 
   @dummy_state []
 
@@ -29,7 +30,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
     Logger.debug("#{inspect(self())}: Uploading media #{id} to #{storage_key}, size: #{byte_size(content)} bytes.")
 
-    {:ok, :uploaded} = Provider.upload(storage_key, content)
+    {:ok, :uploaded} = @provider.upload(storage_key, content)
 
     %{task | media: Storage.set_upload_timestamp(media)}
   end
@@ -39,7 +40,7 @@ defmodule ElixirDrip.Storage.Pipeline.RemoteStorage do
 
     result = case Cache.get(id) do
       nil ->
-        {:ok, content} = Provider.download(storage_key)
+        {:ok, content} = @provider.download(storage_key)
 
         Logger.debug("#{inspect(self())}: Just downloaded media #{id}, content: #{inspect(content)}, size: #{byte_size(content)} bytes.")
 
