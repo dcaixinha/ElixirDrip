@@ -6,8 +6,8 @@ ARG mix_env=prod
 ARG https_port=4040
 ARG http_port=4000
 ARG epmd_port=4639
-ARG app_version=0.1.0
-ARG app_path=/opt/app/
+ARG app_version=0.0.8
+ARG app_path=/opt/app
 ARG app_name=elixir_drip
 ARG replace_os_vars=true
 
@@ -16,7 +16,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-ENV REFRESHED_AT 2017-12-16
+ENV REFRESHED_AT 2018-05-19
 
 ENV APP_PATH $app_path
 ENV APP_NAME $app_name
@@ -27,7 +27,7 @@ ENV EPMD_PORT $epmd_port
 ENV MIX_ENV $mix_env
 ENV REPLACE_OS_VARS $replace_os_vars
 
-RUN apk add --no-cache build-base git nodejs nodejs-npm
+RUN apk add --no-cache build-base git nodejs nodejs-npm bash
 RUN mix archive.install https://github.com/phoenixframework/archives/raw/master/phx_new.ez --force
 RUN mix local.hex --force && mix local.rebar --force
 
@@ -44,6 +44,7 @@ RUN rm -rf _build  \
     && MIX_ENV=$MIX_ENV mix clean \
     && MIX_ENV=$MIX_ENV mix deps.get \
     && MIX_ENV=$MIX_ENV mix compile \
+    && MIX_ENV=$MIX_ENV mix phx.digest \
     && MIX_ENV=$MIX_ENV mix release --env=$MIX_ENV
 
 EXPOSE $HTTP_PORT $HTTPS_PORT $EPMD_PORT
